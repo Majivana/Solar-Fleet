@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Solar Fleet — MVP</title>
+  <style>
+    :root{--bg:#0b1220;--panel:#121c2e;--panel2:#17243a;--text:#e8eef7;--muted:#8fa2bd;--line:#24334c;--ok:#58d38b;--warn:#f2c14e}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1320px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.title{font-size:25px;font-weight:750}.sub{color:var(--muted);font-size:13px;margin-top:5px}
+    .pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#10192a;color:var(--muted);font-size:12px}
+    .cards{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}.label{font-size:12px;color:var(--muted)}.value{font-size:25px;font-weight:750;margin-top:7px}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}.panel h2{margin:0 0 16px;font-size:15px}
+    table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted);font-weight:600}.status{display:inline-flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+    .brand{padding:4px 8px;border-radius:6px;background:var(--panel2);font-size:11px}.alarm{padding:11px 0;border-bottom:1px solid var(--line)}.alarm:last-child{border:0}.sev{color:var(--warn);font-size:11px;font-weight:700}.chart{height:190px;display:flex;align-items:end;gap:6px}.bar{flex:1;background:#2f85ff77;border-radius:5px 5px 2px 2px;min-height:10px}.legend{display:flex;gap:16px;color:var(--muted);font-size:11px;margin-top:8px}
+    @media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}} @media(max-width:620px){.wrap{padding:15px}.cards{grid-template-columns:repeat(2,1fr)}.value{font-size:21px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><div class="title">Solar Fleet</div><div class="sub">Multi-brand PV / battery monitoring</div></div><div><span class="pill" id="mode">Mode unknown</span> <span class="pill" id="updated">Loading…</span></div></div>
+  <div class="cards" id="cards"></div>
+  <div class="grid">
+    <section class="panel"><h2>Fleet power</h2><div class="chart" id="chart"></div><div class="legend"><span>Live normalized telemetry</span><span>• Watts</span></div></section>
+    <section class="panel"><h2>Open alarms</h2><div id="alarms"></div></section>
+  </div>
+  <section class="panel" style="margin-top:16px"><h2>Inverters</h2><table><thead><tr><th>Brand</th><th>Site</th><th>Model</th><th>Serial</th><th>Status</th><th>Last seen</th></tr></thead><tbody id="devices"></tbody></table></section>
+</div>
+<script>
+const fmt=(n,unit='')=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:1})+' '+unit;
+async function api(p){const r=await fetch(p);if(!r.ok)throw new Error(await r.text());return r.json()}
+async function load(){
+  const [s,d,a]=await Promise.all([api('/api/v1/dashboard/summary'),api('/api/v1/devices'),api('/api/v1/alarms')]);
+  document.getElementById('mode').textContent=s.demoMode?'DEMO DATA':'LIVE DATA';
+  document.getElementById('updated').textContent='Updated '+new Date().toLocaleTimeString();
+  document.getElementById('cards').innerHTML=[['Sites',s.sites,''],['Inverters',s.inverters,''],['Online',s.online,''],['PV now',fmt(s.pvPowerW,'W'),''],['Load now',fmt(s.loadPowerW,'W'),''],['Battery',fmt(s.batteryPowerW,'W'),''],['Alarms',a.length,'']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
+  const telemetry=await Promise.all(d.slice(0,12).map(async x=>{const t=await api('/api/v1/devices/'+x.id+'/telemetry');return t[0]?.pvPowerW||0}));
+  const max=Math.max(...telemetry,1); document.getElementById('chart').innerHTML=telemetry.map(v=>`<div class="bar" style="height:${Math.max(8,(v/max)*100)}%" title="${fmt(v,'W')}"></div>`).join('');
+  document.getElementById('devices').innerHTML=d.map(x=>`<tr><td><span class="brand">${x.brand}</span></td><td>${x.site}</td><td>${x.model}</td><td>${x.serialNumber}</td><td><span class="status"><span class="dot"></span>${x.status}</span></td><td>${x.lastSeenAt?new Date(x.lastSeenAt).toLocaleString():'—'}</td></tr>`).join('');
+  document.getElementById('alarms').innerHTML=a.length?a.map(x=>`<div class="alarm"><div><span class="sev">${x.severity}</span> · ${x.brand}</div><div style="margin-top:5px">${x.message}</div><div class="sub">${x.serialNumber} · ${new Date(x.occurredAt).toLocaleString()}</div></div>`).join(''):'<div class="sub">No open alarms.</div>';
+}
+load().catch(e=>{document.getElementById('updated').textContent='API error';console.error(e)}); setInterval(load,60000);
+</script>
+</body>
+</html>

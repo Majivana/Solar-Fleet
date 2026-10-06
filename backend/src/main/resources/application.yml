@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: solar-fleet-mvp
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/solarfleet}
+    username: ${DB_USERNAME:solarfleet}
+    password: ${DB_PASSWORD:solarfleet}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  jackson:
+    time-zone: Africa/Johannesburg
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+platform:
+  demo-data: ${APP_DEMO_DATA:true}
+  polling:
+    initial-delay-ms: ${POLLING_INITIAL_DELAY_MS:1500}
+    fixed-delay-ms: ${POLLING_FIXED_DELAY_MS:60000}
+
+logging:
+  level:
+    za.co.solar.fleet: INFO

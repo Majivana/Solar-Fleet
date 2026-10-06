@@ -1,0 +1,47 @@
+openapi: 3.0.3
+info:
+  title: Solar Fleet Management API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/dashboard/summary:
+    get:
+      summary: Fleet dashboard summary
+      responses:
+        '200':
+          description: OK
+  /api/v1/integrations/catalog:
+    get:
+      summary: Supported integration catalog
+      responses:
+        '200':
+          description: OK
+  /api/v1/sites:
+    get:
+      summary: List sites
+      responses:
+        '200':
+          description: OK
+  /api/v1/devices:
+    get:
+      summary: List inverter devices
+      responses:
+        '200':
+          description: OK
+  /api/v1/devices/{deviceId}/telemetry:
+    get:
+      summary: Latest device telemetry
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200': {description: OK}
+        '404': {description: Device not found}
+  /api/v1/alarms:
+    get:
+      summary: Open alarms
+      responses:
+        '200': {description: OK}
