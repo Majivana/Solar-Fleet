@@ -404,10 +404,12 @@ public class OperationsService {
 
     @Transactional(readOnly = true)
     public ProjectReport report(UUID projectId) {
-        Tenant tenant = currentTenant();
         ProjectSummary project = getProject(projectId);
-        return new ProjectReport(project, listCosts(projectId), listAlarms(true).stream()
-                .filter(a -> projectId.equals(a.projectId())).toList(), activity(projectId));
+        List<Alarm> projectAlarms = alarms.findTop501ByDeviceSiteProjectIdOrderByOccurredAtDesc(projectId);
+        boolean alarmsTruncated = projectAlarms.size() > 500;
+        return new ProjectReport(project, listCosts(projectId),
+                projectAlarms.stream().limit(500).map(this::alarmDto).toList(),
+                activity(projectId), alarmsTruncated);
     }
 
     @Transactional
@@ -766,6 +768,7 @@ public class OperationsService {
             Instant lastSeenAt, Instant acknowledgedAt, Instant clearedAt) {}
     public record AuditDto(UUID id, String action, String summary, Instant occurredAt, UUID projectId, String project,
             UUID deviceId, String device) {}
-    public record ProjectReport(ProjectSummary project, List<CostDto> costs, List<AlarmDto> alarms, List<AuditDto> activity) {}
+    public record ProjectReport(ProjectSummary project, List<CostDto> costs, List<AlarmDto> alarms,
+                                List<AuditDto> activity, boolean alarmsTruncated) {}
     public record ReportRunDto(String type, UUID projectId, Instant generatedAt) {}
 }

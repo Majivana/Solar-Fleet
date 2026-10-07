@@ -45,7 +45,7 @@ Set `APP_DEMO_DATA=false`, `OPERATOR_API_KEY`, and `TENANT_ID` for a non-demo de
 | `GET` | `/alarms?includeCleared=true` | Recent alarm history (up to 100); `false` returns open alarms |
 | `POST` | `/alarms/{id}/acknowledge` | Acknowledge an open alarm |
 | `POST` | `/alarms/{id}/clear` | Clear an alarm while retaining its history |
-| `GET` | `/projects/{id}/report` | Project summary, cost ledger, alarms and activity |
+| `GET` | `/projects/{id}/report` | Project summary, cost ledger, up to 500 project-scoped alarms and activity; includes `alarmsTruncated` |
 | `POST` | `/projects/{id}/report/generate` | Generate and audit a project report |
 | `POST` | `/reports/generate` | Audit report generation using `{ "type": "FLEET|ALARMS|COSTS|SAVINGS|PROJECT", "projectId": "optional UUID" }` |
 

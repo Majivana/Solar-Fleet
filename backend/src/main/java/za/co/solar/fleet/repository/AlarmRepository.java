@@ -13,6 +13,8 @@ public interface AlarmRepository extends JpaRepository<Alarm, UUID> {
   @EntityGraph(attributePaths = {"device", "device.site", "device.site.project"})
   List<Alarm> findTop100ByDeviceTenantIdOrderByOccurredAtDesc(UUID tenantId);
   @EntityGraph(attributePaths = {"device", "device.site", "device.site.project"})
+  List<Alarm> findTop501ByDeviceSiteProjectIdOrderByOccurredAtDesc(UUID projectId);
+  @EntityGraph(attributePaths = {"device", "device.site", "device.site.project"})
   java.util.Optional<Alarm> findByIdAndDeviceTenantId(UUID id, UUID tenantId);
   long countByClearedAtIsNull();
   long countByDeviceTenantIdAndClearedAtIsNull(UUID tenantId);

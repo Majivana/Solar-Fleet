@@ -519,6 +519,7 @@
     const projectId = $("#reportProject")?.value || state.reportProject || "";
     const selected = state.data.projects.find(p=>p.id===projectId) || null;
     const project = selected || state.data.projects[0];
+    const usesDateRange = ["fleet", "alarms", "costs"].includes(type);
     const from=$("#reportFrom")?.value || state.reportFrom, to=$("#reportTo")?.value || state.reportTo;
     const within = value => (!from || String(value || "").slice(0,10) >= from) && (!to || String(value || "").slice(0,10) <= to);
     const data = type === "fleet" ? state.data.devices.filter(d=>within(d.lastSeenAt)&&(!selected||d.projectId===selected.id)) : type === "alarms" ? state.data.alarms.filter(a=>within(a.occurredAt)&&(!selected||a.projectId===selected.id)) : selected ? type === "costs" ? (selected._costs || []).filter(c=>within(c.costDate)) : [selected] : [];
@@ -528,11 +529,11 @@
           ${[["fleet","Fleet report"],["alarms","Alarm report"],["costs","Project cost report"],["savings","Savings report"],["project","Project performance"]].map(([key,label])=>`<option value="${key}" ${type===key?"selected":""}>${label}</option>`).join("")}
         </select>
         <label class="screen-reader" for="reportProject">Project</label><select id="reportProject" class="field-control"><option value="">Select project</option>${state.data.projects.map(p=>`<option value="${esc(p.id)}" ${selected?.id===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select>
-        <label class="screen-reader" for="reportFrom">From date</label><input class="field-control" type="date" id="reportFrom" aria-label="From date" value="${esc(state.reportFrom)}">
-        <label class="screen-reader" for="reportTo">To date</label><input class="field-control" type="date" id="reportTo" aria-label="To date" value="${esc(state.reportTo)}">
+        ${usesDateRange ? `<label class="screen-reader" for="reportFrom">From date</label><input class="field-control" type="date" id="reportFrom" aria-label="From date" value="${esc(state.reportFrom)}">
+        <label class="screen-reader" for="reportTo">To date</label><input class="field-control" type="date" id="reportTo" aria-label="To date" value="${esc(state.reportTo)}">` : ""}
         <button class="button" data-action="print-report">Print</button><button class="button primary" data-action="export-report">Export CSV</button>
       </div><div class="panel-body" id="reportPreview">${renderReportPreview(type,selected,data)}</div></section>
-      <p class="footer-note">Report periods filter dated cost and alarm records. Energy reporting uses currently available normalized telemetry; historical provider data is not fabricated.</p>`;
+      <p class="footer-note">${usesDateRange ? "The selected date range filters dated equipment, alarm, or cost records." : "This is a current snapshot; historical provider data is not fabricated."} Energy reporting uses currently available normalized telemetry.</p>`;
   };
   const renderReportPreview = (type, project, data) => {
     if (type === "fleet") return inverterTable(data);
@@ -700,7 +701,13 @@
       if(action==="ack-alarm") { await api(`/api/v1/alarms/${id}/acknowledge`,{method:"POST"}); await reload(); return; }
       if(action==="clear-alarm" && confirm("Clear this alarm? It will remain in the alarm history.")) { await api(`/api/v1/alarms/${id}/clear`,{method:"POST"}); await reload(); return; }
       if(action==="view-costs") { state.page="reports"; state.reportType="costs"; state.reportProject=id; render(); return; }
-      if(action==="project-report") { state.page="reports"; state.reportType="project"; state.reportProject=id; render(); setTimeout(()=>{const select=$("#reportProject"); if(select){select.value=id;select.dispatchEvent(new Event("change"));}},0); return; }
+      if(action==="project-report") {
+        await api(`/api/v1/projects/${id}/report/generate`, {method:"POST"});
+        state.page="reports"; state.reportType="project"; state.reportProject=id;
+        await reload();
+        notify("Project report generated. The action was recorded in project activity.");
+        return;
+      }
       if(action==="print-report") { window.print(); return; }
       if(action==="export-report") { await exportReport(); return; }
     } catch(error) { notify(error.message); }

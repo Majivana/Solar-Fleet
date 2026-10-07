@@ -20,6 +20,8 @@ Monetary columns use PostgreSQL `numeric`; cost total is `round(quantity × unit
 
 V5 adds optional retirement notes while preserving all existing device and lifecycle records. Restoring an inverter retains its most recent retirement date, reason and notes for reference; audit events record each retire and restore action.
 
+V6 merges duplicate open alarms that share an inverter, code, and message. It retains the earliest first-seen time and latest last-seen time on the canonical alarm, marks duplicate rows cleared at their last-seen time, and adds a database uniqueness index so concurrent polls cannot recreate duplicates under a different fingerprint.
+
 ## Savings basis
 
 The current estimate uses:
