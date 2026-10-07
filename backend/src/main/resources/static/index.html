@@ -307,6 +307,10 @@
       if (item.dataset.page === state.page) item.setAttribute("aria-current", "page");
       else item.removeAttribute("aria-current");
     });
+    if (!state.data) {
+      main.innerHTML = `<div class="loading" role="status">Loading fleet information…</div>`;
+      return;
+    }
     if (state.selectedDevice) return renderDevice();
     if (state.page === "overview") return renderOverview();
     if (state.page === "projects") return state.selectedProject ? renderProject() : renderProjects();
