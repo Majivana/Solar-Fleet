@@ -38,9 +38,9 @@ public class PollingService {
                 account.lastError = null;
                 accounts.save(account);
             } catch (Exception e) {
-                account.lastError = e.getMessage();
+                account.lastError = "Connection failed. Check provider configuration and credentials.";
                 accounts.save(account);
-                log.error("Polling failed for {} / {}", account.brand, account.name, e);
+                log.error("Polling failed for {} / {} ({})", account.brand, account.name, e.getClass().getSimpleName());
             }
         }
     }
@@ -60,6 +60,7 @@ public class PollingService {
             }
         }
         for (Device device : existing) {
+            if (device.lifecycleStatus == LifecycleStatus.RETIRED) continue;
             ConnectorResult<NormalizedTelemetry> result = connector.readTelemetry(account,
                     new RemoteDevice(device.externalDeviceId, device.serialNumber, device.model,
                             device.firmwareVersion, device.ratedPowerKw == null ? 0 : device.ratedPowerKw.doubleValue()));
@@ -90,7 +91,7 @@ public class PollingService {
                 new RemoteDevice(device.externalDeviceId, device.serialNumber, device.model,
                         device.firmwareVersion, device.ratedPowerKw == null ? 0 : device.ratedPowerKw.doubleValue()),
                 Instant.now().minusSeconds(3600), Instant.now());
-        if (!result.success()) return;
+        if (!result.success()) throw new IllegalStateException("Alarm synchronization failed.");
         for (RemoteAlarm ra : result.data()) {
             String fingerprint = alarmFingerprint(device.id, ra.code(), ra.message());
             Alarm a = alarms.findByFingerprintAndClearedAtIsNull(fingerprint).orElseGet(Alarm::new);
@@ -104,11 +105,11 @@ public class PollingService {
 
     private String alarmFingerprint(java.util.UUID deviceId, String code, String message) {
         try {
-            var digest = java.security.MessageDigest.getInstance("SHA-256");
+            var digest = java.security.MessageDigest.getInstance("MD5");
             var input = (deviceId + ":" + code + ":" + message).getBytes(java.nio.charset.StandardCharsets.UTF_8);
             return java.util.HexFormat.of().formatHex(digest.digest(input));
         } catch (java.security.NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is unavailable", e);
+            throw new IllegalStateException("MD5 is unavailable", e);
         }
     }
 }

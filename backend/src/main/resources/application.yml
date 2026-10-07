@@ -16,15 +16,19 @@ spring:
 
 server:
   port: ${PORT:8080}
+  error:
+    include-message: never
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health
 
 platform:
   demo-data: ${APP_DEMO_DATA:true}
+  operator-api-key: ${OPERATOR_API_KEY:}
+  tenant-id: ${TENANT_ID:}
   polling:
     initial-delay-ms: ${POLLING_INITIAL_DELAY_MS:1500}
     fixed-delay-ms: ${POLLING_FIXED_DELAY_MS:60000}

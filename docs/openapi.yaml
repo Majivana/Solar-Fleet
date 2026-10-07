@@ -2,8 +2,19 @@ openapi: 3.0.3
 info:
   title: Solar Fleet Management API
   version: 0.1.0
+  description: |
+    Demo mode is unauthenticated. Non-demo single-tenant deployments require
+    the configured X-Operator-Key header. This is not a user/role auth system.
 servers:
   - url: http://localhost:8080
+security:
+  - OperatorKey: []
+components:
+  securitySchemes:
+    OperatorKey:
+      type: apiKey
+      in: header
+      name: X-Operator-Key
 paths:
   /api/v1/dashboard/summary:
     get:
@@ -45,3 +56,94 @@ paths:
       summary: Open alarms
       responses:
         '200': {description: OK}
+  /api/v1/projects:
+    get:
+      summary: List project workspace summaries
+      responses:
+        '200': {description: OK}
+    post:
+      summary: Create a project
+      responses:
+        '201': {description: Created}
+        '400': {description: Invalid project details}
+  /api/v1/projects/{id}/sites:
+    post:
+      summary: Add a site to a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '201': {description: Created}
+        '404': {description: Project not found}
+  /api/v1/projects/{id}/costs:
+    get:
+      summary: List project costs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200': {description: Project cost ledger}
+    post:
+      summary: Record a project cost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '201': {description: Cost recorded}
+        '400': {description: Invalid cost details}
+  /api/v1/devices:
+    get:
+      summary: List inverters
+      parameters:
+        - name: includeRetired
+          in: query
+          schema: {type: boolean, default: false}
+      responses:
+        '200': {description: Tenant-scoped inverter list}
+    post:
+      summary: Add inverter
+      responses:
+        '201': {description: Inverter added}
+        '409': {description: Duplicate manufacturer and serial}
+  /api/v1/devices/{id}/retire:
+    post:
+      summary: Retire inverter and preserve history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: {type: string, maxLength: 500}
+                retiredAt: {type: string, format: date}
+                notes: {type: string, maxLength: 2000}
+      responses:
+        '200': {description: Retired inverter}
+        '404': {description: Inverter not found}
+  /api/v1/devices/{id}/restore:
+    post:
+      summary: Restore inverter to active fleet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200': {description: Restored inverter}
+  /api/v1/reports/generate:
+    post:
+      summary: Record report generation in activity history
+      responses:
+        '200': {description: Report generation recorded}

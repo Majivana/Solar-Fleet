@@ -1,45 +1,740 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Solar Fleet — MVP</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f6f4">
+  <title>Solar Fleet | Operations</title>
   <style>
-    :root{--bg:#0b1220;--panel:#121c2e;--panel2:#17243a;--text:#e8eef7;--muted:#8fa2bd;--line:#24334c;--ok:#58d38b;--warn:#f2c14e}
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:var(--text)}
-    .wrap{max-width:1320px;margin:auto;padding:28px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.title{font-size:25px;font-weight:750}.sub{color:var(--muted);font-size:13px;margin-top:5px}
-    .pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#10192a;color:var(--muted);font-size:12px}
-    .cards{display:grid;grid-template-columns:repeat(7,1fr);gap:12px}.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}.label{font-size:12px;color:var(--muted)}.value{font-size:25px;font-weight:750;margin-top:7px}
-    .grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}.panel h2{margin:0 0 16px;font-size:15px}
-    table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted);font-weight:600}.status{display:inline-flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
-    .brand{padding:4px 8px;border-radius:6px;background:var(--panel2);font-size:11px}.alarm{padding:11px 0;border-bottom:1px solid var(--line)}.alarm:last-child{border:0}.sev{color:var(--warn);font-size:11px;font-weight:700}.chart{height:190px;display:flex;align-items:end;gap:6px}.bar{flex:1;background:#2f85ff77;border-radius:5px 5px 2px 2px;min-height:10px}.legend{display:flex;gap:16px;color:var(--muted);font-size:11px;margin-top:8px}
-    @media(max-width:1000px){.cards{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}} @media(max-width:620px){.wrap{padding:15px}.cards{grid-template-columns:repeat(2,1fr)}.value{font-size:21px}}
+    :root {
+      color-scheme: light;
+      --canvas: #f5f6f4;
+      --surface: #fff;
+      --ink: #202922;
+      --muted: #647168;
+      --line: #dfe5df;
+      --green: #236c49;
+      --green-soft: #e9f3ed;
+      --amber: #98610e;
+      --amber-soft: #fbf2df;
+      --red: #a63d35;
+      --red-soft: #faeae8;
+      --blue: #356a88;
+      --shadow: 0 2px 8px #1b30200a;
+    }
+    * { box-sizing: border-box }
+    body { margin: 0; background: var(--canvas); color: var(--ink); font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif }
+    button, input, select, textarea { font: inherit }
+    button, a, select { cursor: pointer }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #3b8c64; outline-offset: 2px }
+    .shell { min-height: 100vh }
+    .topbar { height: 66px; display:flex; align-items:center; justify-content:space-between; padding:0 28px; background:var(--surface); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:3 }
+    .brand { display:flex; align-items:center; gap:11px; font-size:16px; font-weight:700; letter-spacing:-.02em }
+    .brand-mark { width:29px; height:29px; display:grid; place-items:center; border:1.5px solid var(--green); border-radius:7px; color:var(--green); font-size:17px; font-weight:700 }
+    .top-actions { display:flex; align-items:center; gap:12px }
+    .demo-tag { color:var(--amber); background:var(--amber-soft); padding:5px 9px; border-radius:4px; font-size:11px; font-weight:700; letter-spacing:.04em }
+    .layout { display:grid; grid-template-columns:210px minmax(0,1fr); max-width:1580px; margin:0 auto }
+    nav { padding:24px 14px; border-right:1px solid var(--line); min-height:calc(100vh - 66px); background:#f9faf8 }
+    .nav-label { margin:0 10px 9px; color:#879188; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase }
+    .nav-list { display:grid; gap:3px; margin-bottom:27px }
+    .nav-item { width:100%; text-align:left; border:0; background:transparent; color:#445047; border-radius:5px; padding:9px 10px; font-weight:550 }
+    .nav-item:hover { background:#edf1ed }
+    .nav-item[aria-current="page"] { background:var(--green-soft); color:var(--green); font-weight:700 }
+    main { min-width:0; padding:30px clamp(18px,3vw,42px) 48px }
+    .page-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:24px }
+    h1 { margin:0; font-size:25px; line-height:1.25; letter-spacing:-.035em; font-weight:700 }
+    h2 { margin:0; font-size:16px; line-height:1.3; letter-spacing:-.015em }
+    h3 { margin:0; font-size:14px }
+    .subtitle { margin-top:5px; color:var(--muted); font-size:13px }
+    .button { display:inline-flex; justify-content:center; align-items:center; gap:7px; min-height:36px; padding:7px 12px; border:1px solid #cad4cc; border-radius:5px; background:#fff; color:#334238; font-weight:650; text-decoration:none }
+    .button:hover { background:#f7f9f7; border-color:#aab9ae }
+    .button.primary { background:var(--green); border-color:var(--green); color:white }
+    .button.primary:hover { background:#1d5c3d }
+    .button.danger { color:var(--red); border-color:#e6c2bd }
+    .button.small { min-height:30px; padding:4px 8px; font-size:12px }
+    .button:disabled { cursor:not-allowed; opacity:.55 }
+    .inline-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px }
+    .metric-row { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; margin-bottom:17px }
+    .metric { background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:15px 16px; box-shadow:var(--shadow); min-width:0 }
+    .metric-label { color:var(--muted); font-size:12px; font-weight:550 }
+    .metric-value { margin-top:5px; font-size:24px; line-height:1.2; letter-spacing:-.035em; font-weight:700; font-variant-numeric:tabular-nums }
+    .metric-note { margin-top:4px; font-size:11px; color:var(--muted) }
+    .content-grid { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr); gap:15px; align-items:start }
+    .stack { display:grid; gap:15px; min-width:0 }
+    .panel { min-width:0; background:var(--surface); border:1px solid var(--line); border-radius:6px; box-shadow:var(--shadow) }
+    .panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:15px 17px; border-bottom:1px solid var(--line) }
+    .panel-body { padding:15px 17px }
+    .panel-title-note { margin-top:3px; color:var(--muted); font-size:12px }
+    .status { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; padding:3px 7px; border-radius:4px; font-size:11px; font-weight:700; background:#eef1ee; color:#59645c }
+    .status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor }
+    .status.online, .status.healthy, .status.active, .status.operational, .status.connected { color:var(--green); background:var(--green-soft) }
+    .status.offline, .status.fault, .status.alarm, .status.critical, .status.sync-error { color:var(--red); background:var(--red-soft) }
+    .status.warning, .status.maintenance, .status.stale, .status.demo-data { color:var(--amber); background:var(--amber-soft) }
+    .status.unknown, .status.unverified, .status.retired { color:#66716a; background:#edf0ed }
+    .attention-list { display:grid }
+    .attention-row { display:grid; grid-template-columns:1fr auto; gap:8px 12px; padding:11px 0; border-bottom:1px solid #edf0ed; align-items:center }
+    .attention-row:last-child { border:0; padding-bottom:0 }
+    .attention-title { font-weight:650 }
+    .attention-meta { color:var(--muted); font-size:12px }
+    .attention-link { color:var(--green); text-decoration:none; font-size:12px; font-weight:700; white-space:nowrap }
+    .attention-link:hover { text-decoration:underline }
+    .table-wrap { width:100%; overflow:auto }
+    table { width:100%; border-collapse:collapse; text-align:left; font-size:12px }
+    th { padding:9px 11px; border-bottom:1px solid var(--line); color:#69756c; background:#fafbfa; font-size:10px; text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; font-weight:700 }
+    td { padding:11px; border-bottom:1px solid #edf0ed; vertical-align:middle }
+    tbody tr:last-child td { border-bottom:0 }
+    tbody tr:hover { background:#fbfcfb }
+    .link-button { padding:0; border:0; background:none; color:var(--green); text-align:left; font-weight:650 }
+    .link-button:hover { text-decoration:underline }
+    .mono { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; white-space:nowrap }
+    .muted { color:var(--muted) }
+    .small-text { font-size:12px }
+    .empty { padding:24px 12px; text-align:center; color:var(--muted) }
+    .empty strong { display:block; color:var(--ink); margin-bottom:4px }
+    .toolbar { display:flex; gap:9px; align-items:center; flex-wrap:wrap; padding:12px 15px; border-bottom:1px solid var(--line) }
+    .field-control { min-height:35px; padding:7px 9px; border:1px solid #cbd4cd; border-radius:4px; background:white; color:var(--ink); max-width:100% }
+    .toolbar input[type="search"] { min-width:200px; flex:1 }
+    .project-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px }
+    .project-card { padding:16px; background:#fff; border:1px solid var(--line); border-radius:6px }
+    .project-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px }
+    .project-name { font-size:15px; font-weight:700 }
+    .project-meta { color:var(--muted); font-size:12px; margin-top:3px }
+    .project-numbers { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:16px 0; padding:12px 0; border-top:1px solid #edf0ed; border-bottom:1px solid #edf0ed }
+    .project-number strong { display:block; font-size:16px; font-variant-numeric:tabular-nums }
+    .project-number span { color:var(--muted); font-size:11px }
+    .tabs { display:flex; overflow:auto; border-bottom:1px solid var(--line); margin:-5px 0 17px; gap:20px }
+    .tab { border:0; border-bottom:2px solid transparent; padding:10px 1px; background:none; color:var(--muted); white-space:nowrap; font-weight:650 }
+    .tab[aria-selected="true"] { color:var(--green); border-bottom-color:var(--green) }
+    .detail-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:15px }
+    .detail-item { background:#f8faf8; border:1px solid #e8ede8; border-radius:4px; padding:11px }
+    .detail-item span { display:block; color:var(--muted); font-size:11px }
+    .detail-item strong { display:block; margin-top:4px; font-size:14px; overflow-wrap:anywhere }
+    .bar-list { display:grid; gap:10px }
+    .bar-row { display:grid; grid-template-columns:100px minmax(50px,1fr) 55px; align-items:center; gap:10px; font-size:12px }
+    .bar-track { height:9px; background:#edf1ed; overflow:hidden; border-radius:5px }
+    .bar-fill { display:block; height:100%; background:#508b69; border-radius:5px }
+    .financial-line { display:flex; justify-content:space-between; gap:15px; padding:8px 0; border-bottom:1px solid #edf0ed }
+    .financial-line:last-child { border-bottom:0 }
+    .financial-line strong { font-variant-numeric:tabular-nums; text-align:right }
+    .notice { padding:10px 12px; border-left:3px solid #c59a46; background:#fcf8ed; color:#604c25; font-size:12px }
+    .error-box { padding:14px; border:1px solid #e6c2bd; border-radius:5px; color:#7d302a; background:#fff8f7 }
+    .screen-reader { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap }
+    dialog { width:min(570px,calc(100vw - 26px)); max-height:calc(100vh - 30px); overflow:auto; padding:0; border:1px solid #d3dbd4; border-radius:7px; color:var(--ink); box-shadow:0 20px 60px #17221933 }
+    dialog::backdrop { background:#17221c66 }
+    .dialog-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 19px; border-bottom:1px solid var(--line) }
+    .dialog-body { padding:17px 19px }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+    .form-field { display:grid; gap:5px; min-width:0 }
+    .form-field.full { grid-column:1/-1 }
+    .form-field label { font-size:12px; font-weight:650 }
+    .form-field label .required { color:var(--red) }
+    .form-field input, .form-field select, .form-field textarea { width:100%; min-height:37px; border:1px solid #cbd4cd; border-radius:4px; padding:8px 9px; background:white }
+    .form-field textarea { min-height:75px; resize:vertical }
+    .form-hint { color:var(--muted); font-size:11px }
+    .form-error { display:none; color:var(--red); font-size:12px; margin-bottom:10px }
+    .dialog-actions { display:flex; justify-content:space-between; gap:10px; margin-top:17px; padding-top:13px; border-top:1px solid var(--line) }
+    .dialog-actions-right { display:flex; justify-content:flex-end; gap:8px }
+    .loading { padding:35px; text-align:center; color:var(--muted) }
+    .footer-note { margin-top:18px; color:#7a857d; font-size:11px }
+    @media(max-width:1050px) { .layout { grid-template-columns:170px minmax(0,1fr) } .metric-row { grid-template-columns:repeat(3,minmax(0,1fr)) } .content-grid { grid-template-columns:1fr } }
+    @media(max-width:700px) {
+      .topbar { height:58px; padding:0 14px }
+      .layout { display:block }
+      nav { min-height:0; padding:7px 10px; border:0; border-bottom:1px solid var(--line); overflow:auto }
+      .nav-label { display:none }
+      .nav-list { display:flex; width:max-content; gap:3px; margin:0 }
+      .nav-item { width:auto; padding:8px 10px; white-space:nowrap; font-size:12px }
+      main { padding:21px 13px 35px }
+      .page-heading { margin-bottom:17px }
+      h1 { font-size:22px }
+      .metric-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px }
+      .metric { padding:12px }
+      .metric-value { font-size:21px }
+      .project-grid { grid-template-columns:1fr }
+      .detail-grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+      .form-grid { grid-template-columns:1fr }
+      .form-field.full { grid-column:auto }
+      .demo-tag { display:none }
+      .top-actions { gap:6px }
+      .button { min-height:34px; padding:6px 9px; font-size:12px }
+    }
+    @media print {
+      body { background:white; font-size:11px }
+      .topbar, nav, .page-heading .button, .toolbar, .tabs, .no-print, .footer-note { display:none!important }
+      .layout { display:block; max-width:none }
+      main { padding:0 }
+      .panel, .metric, .project-card { box-shadow:none; break-inside:avoid }
+      .table-wrap { overflow:visible }
+      th { background:#f1f3f1!important }
+      .project-grid { grid-template-columns:1fr 1fr }
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top"><div><div class="title">Solar Fleet</div><div class="sub">Multi-brand PV / battery monitoring</div></div><div><span class="pill" id="mode">Mode unknown</span> <span class="pill" id="updated">Loading…</span></div></div>
-  <div class="cards" id="cards"></div>
-  <div class="grid">
-    <section class="panel"><h2>Fleet power</h2><div class="chart" id="chart"></div><div class="legend"><span>Live normalized telemetry</span><span>• Watts</span></div></section>
-    <section class="panel"><h2>Open alarms</h2><div id="alarms"></div></section>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Solar Fleet</span></div>
+    <div class="top-actions">
+      <span id="demoTag" class="demo-tag" hidden>DEMO DATA</span>
+      <span id="lastUpdated" class="muted small-text" aria-live="polite">Loading fleet…</span>
+      <button class="button primary" data-action="add-inverter">+ Add Inverter</button>
+    </div>
+  </header>
+  <div class="layout">
+    <nav aria-label="Main navigation">
+      <p class="nav-label">Operations</p>
+      <div class="nav-list" role="list">
+        <button class="nav-item" data-page="overview" aria-current="page">Overview</button>
+        <button class="nav-item" data-page="projects">Projects</button>
+        <button class="nav-item" data-page="fleet">Fleet</button>
+        <button class="nav-item" data-page="alarms">Alarms</button>
+      </div>
+      <p class="nav-label">Management</p>
+      <div class="nav-list" role="list">
+        <button class="nav-item" data-page="financials">Financials</button>
+        <button class="nav-item" data-page="reports">Reports</button>
+        <button class="nav-item" data-page="integrations">Integrations</button>
+      </div>
+    </nav>
+    <main id="main" tabindex="-1"><div class="loading" role="status">Loading fleet information…</div></main>
   </div>
-  <section class="panel" style="margin-top:16px"><h2>Inverters</h2><table><thead><tr><th>Brand</th><th>Site</th><th>Model</th><th>Serial</th><th>Status</th><th>Last seen</th></tr></thead><tbody id="devices"></tbody></table></section>
 </div>
+
+<dialog id="actionDialog" aria-labelledby="dialogTitle">
+  <div class="dialog-head"><h2 id="dialogTitle"></h2><button class="button small" type="button" data-action="close-dialog" aria-label="Close dialog">Close</button></div>
+  <form id="actionForm" class="dialog-body"></form>
+</dialog>
+
 <script>
-const fmt=(n,unit='')=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:1})+' '+unit;
-async function api(p){const r=await fetch(p);if(!r.ok)throw new Error(await r.text());return r.json()}
-async function load(){
-  const [s,d,a]=await Promise.all([api('/api/v1/dashboard/summary'),api('/api/v1/devices'),api('/api/v1/alarms')]);
-  document.getElementById('mode').textContent=s.demoMode?'DEMO DATA':'LIVE DATA';
-  document.getElementById('updated').textContent='Updated '+new Date().toLocaleTimeString();
-  document.getElementById('cards').innerHTML=[['Sites',s.sites,''],['Inverters',s.inverters,''],['Online',s.online,''],['PV now',fmt(s.pvPowerW,'W'),''],['Load now',fmt(s.loadPowerW,'W'),''],['Battery',fmt(s.batteryPowerW,'W'),''],['Alarms',a.length,'']].map(x=>`<div class="card"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join('');
-  const telemetry=await Promise.all(d.slice(0,12).map(async x=>{const t=await api('/api/v1/devices/'+x.id+'/telemetry');return t[0]?.pvPowerW||0}));
-  const max=Math.max(...telemetry,1); document.getElementById('chart').innerHTML=telemetry.map(v=>`<div class="bar" style="height:${Math.max(8,(v/max)*100)}%" title="${fmt(v,'W')}"></div>`).join('');
-  document.getElementById('devices').innerHTML=d.map(x=>`<tr><td><span class="brand">${x.brand}</span></td><td>${x.site}</td><td>${x.model}</td><td>${x.serialNumber}</td><td><span class="status"><span class="dot"></span>${x.status}</span></td><td>${x.lastSeenAt?new Date(x.lastSeenAt).toLocaleString():'—'}</td></tr>`).join('');
-  document.getElementById('alarms').innerHTML=a.length?a.map(x=>`<div class="alarm"><div><span class="sev">${x.severity}</span> · ${x.brand}</div><div style="margin-top:5px">${x.message}</div><div class="sub">${x.serialNumber} · ${new Date(x.occurredAt).toLocaleString()}</div></div>`).join(''):'<div class="sub">No open alarms.</div>';
-}
-load().catch(e=>{document.getElementById('updated').textContent='API error';console.error(e)}); setInterval(load,60000);
+(() => {
+  "use strict";
+  const state = { page: "overview", selectedProject: null, reportProject: "", reportFrom: "", reportTo: "", projectTab: "overview", selectedDevice: null, telemetry: [], historyDays: 7, historyFrom: "", historyTo: "", data: null, reportType: "fleet" };
+  const main = document.getElementById("main");
+  const dialog = document.getElementById("actionDialog");
+  const form = document.getElementById("actionForm");
+  let operatorKey = "";
+  let keyPrompt = null;
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+  const money = (value, currency = "ZAR") => value == null ? "—" : new Intl.NumberFormat("en-ZA", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value));
+  const number = (value, digits = 1) => value == null ? "—" : Number(value).toLocaleString("en-ZA", { maximumFractionDigits: digits });
+  const date = value => value ? new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium" }).format(new Date(value)) : "—";
+  const dateTime = value => value ? new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Never";
+  const localDateValue = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+  };
+  const api = async (path, options = {}) => {
+    const usedOperatorKey = Boolean(operatorKey);
+    const send = () => {
+      const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+      if (operatorKey) headers["X-Operator-Key"] = operatorKey;
+      return fetch(path, { ...options, headers });
+    };
+    let response = await send();
+    if (response.status === 401) {
+      if (usedOperatorKey) throw new Error("The operator access key was rejected. Reload the page to try again.");
+      if (!keyPrompt) keyPrompt = Promise.resolve(window.prompt("Enter the operator access key configured for this fleet."));
+      const entered = await keyPrompt;
+      if (!entered) throw new Error("An operator access key is required.");
+      operatorKey = entered;
+      response = await send();
+      if(response.status===401) throw new Error("The operator access key was rejected. Reload the page to try again.");
+    }
+    if (!response.ok) {
+      const body = await response.text();
+      let message = body;
+      try { const parsed = JSON.parse(body); message = parsed.detail || parsed.message || parsed.error || parsed.title || body; } catch {}
+      throw new Error(message || `Request failed (${response.status})`);
+    }
+    if (response.status === 204) return null;
+    return response.json();
+  };
+  const className = text => String(text || "").toLowerCase().replaceAll(/[^a-z0-9-]/g, "-");
+  const status = (text, extra = "") => `<span class="status ${className(text)} ${extra}">${esc(text || "Unknown")}</span>`;
+  const selectedProject = () => (state.data?.projects || []).find(project => project.id === state.selectedProject);
+  const reload = async () => {
+    main.innerHTML = `<div class="loading" role="status">Updating fleet information…</div>`;
+    try {
+      const [summary, projects, devices, alarms, activity, sites, costs] = await Promise.all([
+        api("/api/v1/dashboard/summary"), api("/api/v1/projects"), api("/api/v1/devices?includeRetired=true"),
+        api("/api/v1/alarms?includeCleared=true"), api("/api/v1/activity"), api("/api/v1/sites"), api("/api/v1/costs")
+      ]);
+      projects.forEach(project => { project._costs = costs.filter(cost=>cost.projectId===project.id); });
+      state.data = { summary, projects, devices, alarms, activity, sites, costs };
+      if (state.selectedProject && !projects.some(project => project.id === state.selectedProject)) state.selectedProject = null;
+      $("#demoTag").hidden = !summary.demoMode;
+      $("#lastUpdated").textContent = `Updated ${new Date().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}`;
+      render();
+    } catch (error) {
+      $("#lastUpdated").textContent = "Could not update";
+      main.innerHTML = `<div class="page-heading"><div><h1>Fleet overview</h1><p class="subtitle">Fleet information could not be loaded.</p></div></div><div class="error-box" role="alert"><strong>Unable to reach the fleet service.</strong><p>${esc(error.message)}</p><button class="button" data-action="reload">Try again</button></div>`;
+    }
+  };
+  const pageTitle = { overview: "Fleet overview", projects: "Projects", fleet: "Fleet", alarms: "Alarms", financials: "Financials", reports: "Reports", integrations: "Integrations" };
+  const heading = (title, subtitle, action = "") => `<div class="page-heading"><div><h1>${esc(title)}</h1><p class="subtitle">${esc(subtitle)}</p></div>${action}</div>`;
+  const panel = (title, body, note = "", action = "") => `<section class="panel"><div class="panel-head"><div><h2>${esc(title)}</h2>${note ? `<div class="panel-title-note">${esc(note)}</div>` : ""}</div>${action}</div><div class="panel-body">${body}</div></section>`;
+  const empty = (title, text, button = "") => `<div class="empty"><strong>${esc(title)}</strong>${esc(text)}${button ? `<div style="margin-top:12px">${button}</div>` : ""}</div>`;
+  const metric = (label, value, note = "") => `<div class="metric"><div class="metric-label">${esc(label)}</div><div class="metric-value">${value}</div>${note ? `<div class="metric-note">${esc(note)}</div>` : ""}</div>`;
+  const attentionItems = () => {
+    const items = state.data.summary.attention || [];
+    return items.length ? `<div class="attention-list">${items.map(item => `<div class="attention-row">
+      <div><div class="attention-title">${esc(item.message)}</div><div class="attention-meta">${esc(item.project)} · ${esc(item.serialNumber)}${item.lastSeenAt ? ` · Last communication ${esc(dateTime(item.lastSeenAt))}` : ""}</div></div>
+      ${item.deviceId ? `<button class="attention-link" data-action="view-device" data-id="${esc(item.deviceId)}">View inverter</button>` : `<button class="attention-link" data-action="view-project" data-id="${esc(item.projectId)}">View project</button>`}
+    </div>`).join("")}</div>` : empty("No issues need attention", "Fleet health looks good right now.");
+  };
+  const inverterTable = (devices, compact = false) => {
+    if (!devices.length) return empty("No inverters have been added yet.", "Add an inverter to start monitoring your fleet.", `<button class="button primary" data-action="add-inverter">+ Add Inverter</button>`);
+    const extraHeader = compact ? "" : "<th>Lifecycle</th><th>Cost</th>";
+    const rows = devices.map(device => {
+      const extraCells = compact ? "" : `<td>${status(device.lifecycleStatus)}</td><td class="mono">${money(device.purchaseCost)}</td>`;
+      return `<tr>
+        <td>${status(device.status)}</td>
+        <td><button class="link-button" data-action="view-device" data-id="${esc(device.id)}">${esc(device.brand)} · ${esc(device.model)}</button></td>
+        <td class="mono">${esc(device.serialNumber)}</td>
+        <td>${esc(device.project)}<div class="muted small-text">${esc(device.site)}</div></td>
+        <td class="mono">${number(device.ratedPowerKw)} kW</td>
+        <td class="mono">${!device.telemetryFresh || device.pvPowerW == null ? "—" : `${number(device.pvPowerW)} W`}</td>
+        <td>${esc(dateTime(device.lastSeenAt))}</td>
+        <td>${status(device.integrationStatus)}</td>
+        ${extraCells}
+      </tr>`;
+    }).join("");
+    return `<div class="table-wrap"><table><thead><tr><th>Health</th><th>Manufacturer / model</th><th>Serial</th><th>Project · Site</th><th>Power</th><th>Output</th><th>Last communication</th><th>Integration</th>${extraHeader}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  };
+  const render = () => {
+    document.querySelectorAll(".nav-item").forEach(item => {
+      if (item.dataset.page === state.page) item.setAttribute("aria-current", "page");
+      else item.removeAttribute("aria-current");
+    });
+    if (state.selectedDevice) return renderDevice();
+    if (state.page === "overview") return renderOverview();
+    if (state.page === "projects") return state.selectedProject ? renderProject() : renderProjects();
+    if (state.page === "fleet") return renderFleet();
+    if (state.page === "alarms") return renderAlarms();
+    if (state.page === "financials") return renderFinancials();
+    if (state.page === "reports") return renderReports();
+    if (state.page === "integrations") return renderIntegrations();
+  };
+  const renderOverview = () => {
+    const s = state.data.summary;
+    const attention = (s.attention || []).length;
+    const current = state.data.devices.filter(d => d.lifecycleStatus !== "RETIRED");
+    const healthy = current.filter(d => d.status === "Healthy").length;
+    const recent = current.filter(d => d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() > 15 * 60 * 1000).length;
+    const projectRows = state.data.projects.slice(0, 6).map(p => `<tr><td><button class="link-button" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name)}</button><div class="muted small-text">${esc(p.customer || p.location || "")}</div></td><td>${status(p.status)}</td><td class="mono">${p.online}/${p.activeInverters} online</td><td class="mono">${number(p.pvPowerW)} W</td><td class="mono">${number(p.energyTodayKwh)} kWh</td></tr>`).join("");
+    main.innerHTML = `${heading("Fleet overview", "Operational health, production and the issues that need action.", `<button class="button primary" data-action="add-inverter">+ Add Inverter</button>`)}
+      <div class="metric-row">
+        ${metric("Healthy / online", `${healthy}<span class="muted" style="font-size:14px;font-weight:500"> / ${current.length}</span>`, "Active inverters")}
+        ${metric("Offline", number(s.offline, 0), "Requires investigation")}
+        ${metric("Faulted", number(s.faulted, 0), "Check alarms")}
+        ${metric("Open alarms", number(s.alarms, 0), "Review and acknowledge")}
+        ${metric("Current production", `${number(s.pvPowerW)} <span style="font-size:14px;font-weight:550">W</span>`, "Latest available readings")}
+      </div>
+      <div class="content-grid">
+        <div class="stack">
+          ${panel("Projects", `<div class="table-wrap"><table><thead><tr><th>Project</th><th>Status</th><th>Availability</th><th>Output</th><th>Energy today</th></tr></thead><tbody>${projectRows || `<tr><td colspan="5">${empty("No projects yet", "Create a project to organise sites and equipment.", `<button class="button primary" data-action="create-project">Create project</button>`)}</td></tr>`}</tbody></table></div>`, `${state.data.projects.length} managed project${state.data.projects.length === 1 ? "" : "s"}`, `<button class="button small" data-action="navigate" data-page="projects">View all</button>`)}
+          ${panel("Fleet", inverterTable(state.data.devices.filter(d => d.lifecycleStatus !== "RETIRED").slice(0, 7), true), `${current.length} active · ${number(recent, 0)} with communication older than 15 minutes`, `<button class="button small" data-action="navigate" data-page="fleet">Search fleet</button>`)}
+        </div>
+        <div class="stack">
+          ${panel("Needs attention", attentionItems(), `${number(attention, 0)} issue${attention === 1 ? "" : "s"} · Select an item to act`)}
+          ${panel("Today's production", `<div class="metric-value" style="font-size:30px">${number(s.energyTodayKwh)} <span style="font-size:15px;font-weight:550">kWh</span></div><div class="panel-title-note" style="margin-top:7px">Combined daily energy from the latest device readings. Older or missing readings are not treated as live.</div><div class="bar-list" style="margin-top:19px">${state.data.projects.slice(0,5).map(project => {
+            const max = Math.max(...state.data.projects.map(p => Number(p.pvPowerW || 0)), 1);
+            return `<div class="bar-row"><span>${esc(project.name.length > 15 ? project.name.slice(0,15) + "…" : project.name)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.max(0, Math.min(100, Number(project.pvPowerW || 0) / max * 100))}%"></span></span><strong>${number(project.pvPowerW)} W</strong></div>`;
+          }).join("")}</div>`, "Current output by project")}
+          ${panel("Recent activity", (state.data.activity || []).length ? `<div class="attention-list">${state.data.activity.slice(0,6).map(event => `<div class="attention-row"><div><div class="attention-title">${esc(event.summary)}</div><div class="attention-meta">${esc(event.project || "Fleet")} · ${esc(dateTime(event.occurredAt))}</div></div></div>`).join("")}</div>` : empty("No activity recorded", "Important project and equipment changes will appear here."))}
+        </div>
+      </div><p class="footer-note">${s.demoMode ? "Demo data is generated locally and is not live OEM telemetry." : "Readings include their source timestamps. Contact your integration owner if data appears stale."}</p>`;
+  };
+  const renderProjects = () => {
+    const projects = state.data.projects;
+    const cards = projects.map(project => `<article class="project-card">
+      <div class="project-card-top"><div><button class="link-button project-name" data-action="open-project" data-id="${esc(project.id)}">${esc(project.name)}</button><div class="project-meta">${esc(project.customer || "Customer not set")} · ${esc(project.location || "Location not set")}</div></div>${status(project.status)}</div>
+      <div class="project-numbers"><div class="project-number"><strong>${project.activeInverters}</strong><span>Active inverters</span></div><div class="project-number"><strong>${project.siteCount}</strong><span>Sites</span></div><div class="project-number"><strong>${number(project.pvPowerW)} W</strong><span>Current output</span></div></div>
+      <div class="inline-actions"><button class="button small" data-action="open-project" data-id="${esc(project.id)}">Open workspace</button><button class="button small" data-action="add-inverter" data-project="${esc(project.id)}">+ Inverter</button><button class="button small" data-action="add-cost" data-project="${esc(project.id)}">+ Cost</button></div>
+    </article>`).join("");
+    main.innerHTML = `${heading("Projects", "Manage customer projects, sites, equipment and financial performance.", `<button class="button primary" data-action="create-project">+ New Project</button>`)}
+      <div class="metric-row">${metric("Projects", number(projects.length, 0))}${metric("Sites", number(state.data.summary.sites, 0))}${metric("Active inverters", number(state.data.summary.inverters, 0))}${metric("Fleet output", `${number(state.data.summary.pvPowerW)} W`)}</div>
+      ${projects.length ? `<div class="project-grid">${cards}</div>` : `<section class="panel">${empty("No projects have been created.", "Create a project first, then add sites and inverters.", `<button class="button primary" data-action="create-project">Create project</button>`)}</section>`}`;
+  };
+  const projectTabs = `<div class="tabs" role="tablist" aria-label="Project workspace sections">
+    ${[["overview","Overview"],["fleet","Fleet"],["performance","Performance"],["financials","Financials"],["activity","Activity"]].map(([id,label]) => `<button class="tab" role="tab" aria-selected="${state.projectTab === id}" data-action="project-tab" data-tab="${id}">${label}</button>`).join("")}
+  </div>`;
+  const renderProject = () => {
+    const p = selectedProject();
+    if (!p) { state.selectedProject = null; return renderProjects(); }
+    const projectDevices = state.data.devices.filter(d => d.projectId === p.id);
+    const activeDevices = projectDevices.filter(d => d.lifecycleStatus !== "RETIRED");
+    const costs = p._costs || [];
+    main.innerHTML = `${heading(p.name, `${p.customer || "Customer not set"} · ${p.location || "Location not set"} · ${p.siteCount} site${p.siteCount === 1 ? "" : "s"}`,
+      `<div class="inline-actions"><button class="button" data-action="edit-project" data-id="${esc(p.id)}">Edit project</button><button class="button" data-action="add-site" data-project="${esc(p.id)}">+ Add Site</button><button class="button" data-action="add-cost" data-project="${esc(p.id)}">+ Add Cost</button><button class="button primary" data-action="project-report" data-id="${esc(p.id)}">Generate Report</button></div>`)}
+      <div class="metric-row">${metric("Project status", status(p.status))}${metric("Fleet health", `${p.online} <span class="muted" style="font-size:14px">online</span>`, `${p.offline} offline · ${p.faulted} faulted`)}${metric("Production now", `${number(p.pvPowerW)} W`)}${metric("Energy today", `${number(p.energyTodayKwh)} kWh`)}${metric("Capacity", `${number(p.capacityKw)} kW`)}</div>
+      ${projectTabs}<div id="projectContent">${renderProjectTab(p, projectDevices, activeDevices)}</div>`;
+  };
+  const renderProjectTab = (p, projectDevices, activeDevices) => {
+    if (state.projectTab === "fleet") return panel("Project fleet", inverterTable(projectDevices, false), `${activeDevices.length} active · ${projectDevices.length - activeDevices.length} retired`, `<button class="button small primary" data-action="add-inverter" data-project="${esc(p.id)}">+ Add Inverter</button>`);
+    if (state.projectTab === "performance") return `<div class="content-grid"><div class="stack">${panel("Current production", `<div class="metric-value" style="font-size:30px">${number(p.pvPowerW)} W</div><p class="muted small-text">Latest available readings for active inverters. Today's combined energy: <strong>${number(p.energyTodayKwh)} kWh</strong>.</p>`, "Live data is only shown when an integration reports a recent timestamp.")}${panel("Availability", `<div class="bar-list">${[["Online",p.online],["Offline",p.offline],["Faulted",p.faulted],["Other / unknown",Math.max(0,p.activeInverters-p.online-p.offline-p.faulted)]].map(([label,value]) => `<div class="bar-row"><span>${label}</span><span class="bar-track"><span class="bar-fill" style="width:${p.activeInverters ? Number(value)/p.activeInverters*100 : 0}%"></span></span><strong>${value}</strong></div>`).join("")}</div>`)}</div><div class="stack">${panel("Production basis", `<p class="muted small-text">The energy figure is the sum of each active inverter's latest daily-energy reading. Historical day-by-day charts require provider history data, which is not enabled for the local demo connector.</p>`, "No historical values are fabricated.")}</div></div>`;
+    if (state.projectTab === "financials") return renderProjectFinancials(p);
+    if (state.projectTab === "activity") {
+      const events = state.data.activity.filter(event => event.projectId === p.id);
+      return panel("Project activity", events.length ? `<div class="attention-list">${events.map(event => `<div class="attention-row"><div><div class="attention-title">${esc(event.summary)}</div><div class="attention-meta">${esc(event.action.replaceAll("_"," ").toLowerCase())} · ${esc(dateTime(event.occurredAt))}</div></div></div>`).join("")}</div>` : empty("No recent project activity", "Changes to this project's assets and costs will appear here."));
+    }
+    const projectAlarms = state.data.alarms.filter(a => a.projectId === p.id && !a.clearedAt);
+    return `<div class="content-grid"><div class="stack">
+      ${panel("Needs attention", (() => {
+        const items = (state.data.summary.attention || []).filter(item => item.project === p.name);
+        return items.length ? `<div class="attention-list">${items.map(item => `<div class="attention-row"><div><div class="attention-title">${esc(item.message)}</div><div class="attention-meta">${esc(item.serialNumber || item.project)}</div></div>${item.deviceId ? `<button class="attention-link" data-action="view-device" data-id="${esc(item.deviceId)}">View inverter</button>` : `<button class="attention-link" data-action="view-project" data-id="${esc(item.projectId)}">View project</button>`}</div>`).join("")}</div>` : empty("Nothing needs attention", "There are no current project issues.");
+      })())}
+      ${panel("Fleet", inverterTable(activeDevices.slice(0,6), true), `${activeDevices.length} active inverters`, `<button class="button small" data-action="project-tab" data-tab="fleet">View project fleet</button>`)}
+      ${panel("Open alarms", projectAlarms.length ? alarmsTable(projectAlarms.slice(0,5)) : empty("No open alarms", "Alarms for this project will appear here."))}
+    </div><div class="stack">
+      ${panel("Project details", `<div class="financial-line"><span>Status</span>${status(p.status)}</div><div class="financial-line"><span>Start date</span><strong>${date(p.startDate)}</strong></div><div class="financial-line"><span>Commissioned</span><strong>${date(p.commissioningDate)}</strong></div><div class="financial-line"><span>Sites</span><strong>${p.siteCount}</strong></div><div class="financial-line"><span>Active inverters</span><strong>${p.activeInverters}</strong></div><div class="financial-line"><span>Retired inverters</span><strong>${p.retiredInverters}</strong></div>${p.description ? `<p class="muted small-text">${esc(p.description)}</p>` : ""}`, "Project workspace")}
+      ${renderProjectFinancials(p)}
+    </div></div>`;
+  };
+  const renderProjectFinancials = p => `<section class="panel"><div class="panel-head"><div><h2>Financial summary</h2><div class="panel-title-note">Actual costs and clearly labelled estimates</div></div><button class="button small" data-action="add-cost" data-project="${esc(p.id)}">+ Add Cost</button></div><div class="panel-body">
+    <div class="financial-line"><span>Project budget</span><strong>${money(p.budget,p.currency)}</strong></div>
+    <div class="financial-line"><span>Actual spend</span><strong>${money(p.actualSpend,p.currency)}</strong></div>
+    <div class="financial-line"><span>Remaining budget</span><strong>${money(p.remainingBudget,p.currency)}</strong></div>
+    <div class="financial-line"><span>Budget used</span><strong>${p.budgetUtilisationPercent == null ? "Not set" : `${number(p.budgetUtilisationPercent)}%`}</strong></div>
+    <div class="financial-line"><span>Estimated daily savings</span><strong>${money(p.estimatedDailySavings,p.currency)}</strong></div>
+    <div class="financial-line"><span>Estimated annual savings</span><strong>${money(p.estimatedAnnualSavings,p.currency)}</strong></div>
+    <div class="financial-line"><span>Estimated annual return / payback</span><strong>${p.estimatedAnnualRoiPercent == null ? "—" : `${number(p.estimatedAnnualRoiPercent)}%`} / ${p.estimatedPaybackYears == null ? "—" : `${number(p.estimatedPaybackYears)} years`}</strong></div>
+    <p class="notice" style="margin-top:12px"><strong>Savings assumptions.</strong> ${esc(p.savingsBasis)} Import tariff: ${p.importTariff == null ? "not set" : `${money(p.importTariff,p.currency)}/kWh`}. Export revenue and operating costs are excluded.</p>
+    <div class="inline-actions no-print" style="margin-top:11px"><button class="button small" data-action="edit-project" data-id="${esc(p.id)}">Update budget & assumptions</button><button class="button small" data-action="view-costs" data-id="${esc(p.id)}">View cost breakdown</button></div>
+  </div></section>`;
+  const renderFleet = () => {
+    if (state.selectedDevice) return renderDevice();
+    const q = $("#fleetSearch")?.value?.toLowerCase() || "";
+    const project = $("#fleetProject")?.value || "";
+    const health = $("#fleetHealth")?.value || "";
+    const manufacturer = $("#fleetBrand")?.value || "";
+    const integration = $("#fleetIntegration")?.value || "";
+    const selectedSite = $("#fleetSite")?.value || "";
+    const site = !project || state.data.sites.some(item=>item.id===selectedSite&&item.projectId===project) ? selectedSite : "";
+    const lifecycle = $("#fleetLifecycle")?.value || "ACTIVE";
+    const sort = $("#fleetSort")?.value || "serialNumber";
+    const direction = $("#fleetDirection")?.value || "asc";
+    const list = state.data.devices.filter(d => (lifecycle === "ALL" || d.lifecycleStatus === lifecycle)
+      && (!project || d.projectId === project) && (!health || d.status === health) && (!manufacturer || d.brand === manufacturer)
+      && (!integration || d.integrationStatus === integration) && (!site || d.siteId === site)
+      && (!q || [d.serialNumber,d.model,d.brand,d.site,d.project].some(s => String(s || "").toLowerCase().includes(q))));
+    list.sort((a,b) => {
+      const av=a[sort], bv=b[sort];
+      const left=av==null?"":av, right=bv==null?"":bv;
+      const compared=typeof left==="number"||typeof right==="number" ? Number(left)-Number(right) : String(left).localeCompare(String(right));
+      return direction==="desc" ? -compared : compared;
+    });
+    const projects = state.data.projects.map(p => `<option value="${esc(p.id)}" ${project===p.id?"selected":""}>${esc(p.name)}</option>`).join("");
+    const brands = [...new Set(state.data.devices.map(d => d.brand))].sort().map(b => `<option ${manufacturer===b?"selected":""}>${esc(b)}</option>`).join("");
+    const sites = state.data.sites.filter(s=>!project||s.projectId===project).map(s=>`<option value="${esc(s.id)}" ${site===s.id?"selected":""}>${esc(s.name)}</option>`).join("");
+    const integrations = [...new Set(state.data.devices.map(d=>d.integrationStatus))].sort().map(s=>`<option ${integration===s?"selected":""}>${esc(s)}</option>`).join("");
+    const pageBody = `${heading(state.selectedDevice ? "Inverter detail" : "Fleet", "Search, filter and manage equipment across all managed sites.", `<button class="button primary" data-action="add-inverter">+ Add Inverter</button>`)}
+      <div class="metric-row">${metric("Active", number(state.data.summary.inverters,0))}${metric("Online", number(state.data.summary.online,0))}${metric("Offline", number(state.data.summary.offline,0))}${metric("Faulted", number(state.data.summary.faulted,0))}${metric("Retired", number(state.data.summary.retired,0))}</div>
+      <section class="panel"><div class="toolbar">
+        <label class="screen-reader" for="fleetSearch">Search inverters</label><input id="fleetSearch" class="field-control" type="search" placeholder="Search serial, model or site…" value="${esc(q)}">
+        <label class="screen-reader" for="fleetProject">Filter by project</label><select id="fleetProject" class="field-control"><option value="">All projects</option>${projects}</select>
+        <label class="screen-reader" for="fleetHealth">Filter by health</label><select id="fleetHealth" class="field-control"><option value="">All health states</option>${["Healthy","Warning","Fault","Offline","Maintenance","Unknown"].map(s=>`<option ${health===s?"selected":""}>${s}</option>`).join("")}</select>
+        <label class="screen-reader" for="fleetBrand">Filter by manufacturer</label><select id="fleetBrand" class="field-control"><option value="">All manufacturers</option>${brands}</select>
+        <label class="screen-reader" for="fleetSite">Filter by site</label><select id="fleetSite" class="field-control"><option value="">All sites</option>${sites}</select>
+        <label class="screen-reader" for="fleetIntegration">Filter by integration</label><select id="fleetIntegration" class="field-control"><option value="">All integration states</option>${integrations}</select>
+        <label class="screen-reader" for="fleetLifecycle">Filter by lifecycle</label><select id="fleetLifecycle" class="field-control"><option value="ACTIVE" ${lifecycle==="ACTIVE"?"selected":""}>Active</option><option value="MAINTENANCE" ${lifecycle==="MAINTENANCE"?"selected":""}>Maintenance</option><option value="RETIRED" ${lifecycle==="RETIRED"?"selected":""}>Retired</option><option value="ALL" ${lifecycle==="ALL"?"selected":""}>All lifecycle states</option></select>
+        <label class="screen-reader" for="fleetSort">Sort fleet</label><select id="fleetSort" class="field-control"><option value="serialNumber" ${sort==="serialNumber"?"selected":""}>Sort: serial</option><option value="brand" ${sort==="brand"?"selected":""}>Manufacturer</option><option value="status" ${sort==="status"?"selected":""}>Health</option><option value="lastSeenAt" ${sort==="lastSeenAt"?"selected":""}>Last communication</option><option value="pvPowerW" ${sort==="pvPowerW"?"selected":""}>Current output</option><option value="purchaseCost" ${sort==="purchaseCost"?"selected":""}>Cost</option></select>
+        <label class="screen-reader" for="fleetDirection">Sort direction</label><select id="fleetDirection" class="field-control"><option value="asc" ${direction==="asc"?"selected":""}>Ascending</option><option value="desc" ${direction==="desc"?"selected":""}>Descending</option></select>
+      </div>${inverterTable(list)}</section>`;
+    main.innerHTML = pageBody;
+  };
+  const alarmsTable = alarms => `<div class="table-wrap"><table><thead><tr><th>Severity</th><th>Alarm</th><th>Project · Site</th><th>Inverter</th><th>First seen</th><th>Last seen</th><th>Status / action</th></tr></thead><tbody>${alarms.map(alarm => `<tr><td>${status(alarm.severity)}</td><td><strong>${esc(alarm.message)}</strong><div class="muted small-text">${esc(alarm.code)}</div></td><td>${esc(alarm.project)}<div class="muted small-text">${esc(alarm.site)}</div></td><td><button class="link-button" data-action="view-device" data-id="${esc(alarm.deviceId)}">${esc(alarm.serialNumber)}</button></td><td>${esc(dateTime(alarm.occurredAt))}</td><td>${esc(dateTime(alarm.lastSeenAt))}</td>  <td>${alarm.clearedAt ? `<span class="muted">Cleared ${esc(dateTime(alarm.clearedAt))}</span>` : `${alarm.acknowledgedAt ? `<span class="muted">Acknowledged</span>` : `<button class="button small" data-action="ack-alarm" data-id="${esc(alarm.id)}">Acknowledge</button>`} <button class="button small" data-action="clear-alarm" data-id="${esc(alarm.id)}">Clear</button>`}</td></tr>`).join("")}</tbody></table></div>`;
+  const renderAlarms = () => {
+    const severity = $("#alarmSeverity")?.value || "";
+    const project = $("#alarmProject")?.value || "";
+    const site = $("#alarmSite")?.value || "";
+    const device = $("#alarmDevice")?.value || "";
+    const statusFilter = $("#alarmStatus")?.value || "OPEN";
+    const alarms = state.data.alarms.filter(a => (statusFilter === "ALL" || (statusFilter === "OPEN" ? !a.clearedAt : Boolean(a.clearedAt))) && (!severity || a.severity === severity) && (!project || a.projectId === project) && (!site || a.siteId === site) && (!device || a.deviceId === device));
+    main.innerHTML = `${heading("Alarms", "Review open faults and warnings, acknowledge ownership, and clear resolved events.")}
+      <div class="metric-row">${metric("Open alarms", number(state.data.alarms.filter(a=>!a.clearedAt).length,0))}${metric("Critical", number(state.data.alarms.filter(a=>a.severity==="CRITICAL"&&!a.clearedAt).length,0))}${metric("Acknowledged", number(state.data.alarms.filter(a=>a.acknowledgedAt&&!a.clearedAt).length,0))}</div>
+      <section class="panel"><div class="toolbar"><label class="screen-reader" for="alarmStatus">Filter by alarm status</label><select id="alarmStatus" class="field-control"><option value="OPEN">Open and acknowledged</option><option value="CLEARED">Cleared</option><option value="ALL">All alarm history</option></select><label class="screen-reader" for="alarmSeverity">Filter by severity</label><select id="alarmSeverity" class="field-control"><option value="">All severities</option>${[...new Set(state.data.alarms.map(a=>a.severity))].map(s=>`<option ${severity===s?"selected":""}>${esc(s)}</option>`).join("")}</select><label class="screen-reader" for="alarmProject">Filter by project</label><select id="alarmProject" class="field-control"><option value="">All projects</option>${state.data.projects.map(p=>`<option value="${esc(p.id)}" ${project===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select><label class="screen-reader" for="alarmSite">Filter by site</label><select id="alarmSite" class="field-control"><option value="">All sites</option>${state.data.sites.map(item=>`<option value="${esc(item.id)}" ${site===item.id?"selected":""}>${esc(item.name)}</option>`).join("")}</select><label class="screen-reader" for="alarmDevice">Filter by inverter</label><select id="alarmDevice" class="field-control"><option value="">All inverters</option>${[...new Set(state.data.alarms.map(item=>item.deviceId))].map(deviceId=>{const alarm=state.data.alarms.find(item=>item.deviceId===deviceId);return `<option value="${esc(deviceId)}" ${device===deviceId?"selected":""}>${esc(alarm.serialNumber)}</option>`;}).join("")}</select></div>
+      ${alarms.length ? alarmsTable(alarms) : empty("No open alarms", "When an inverter reports an alarm, it will appear here.")}</section>`;
+  };
+  const renderFinancials = () => {
+    const rows = state.data.projects.map(p => `<tr><td><button class="link-button" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name)}</button></td><td class="mono">${money(p.budget,p.currency)}</td><td class="mono">${money(p.actualSpend,p.currency)}</td><td class="mono">${money(p.remainingBudget,p.currency)}</td><td class="mono">${money(p.estimatedAnnualSavings,p.currency)}</td><td>${p.estimatedPaybackYears == null ? "—" : `${number(p.estimatedPaybackYears)} years`}</td><td><button class="button small" data-action="add-cost" data-project="${esc(p.id)}">+ Add Cost</button></td></tr>`).join("");
+    main.innerHTML = `${heading("Financials", "Project budgets, recorded costs and estimated savings.", `<button class="button" data-action="navigate" data-page="reports">Cost report</button>`)}
+      <div class="metric-row">${metric("Projects", number(state.data.projects.length,0))}${metric("Budgets set", number(state.data.projects.filter(p=>p.budget!=null).length,0))}${metric("Projects with recorded spend", number(state.data.projects.filter(p=>Number(p.actualSpend||0)>0).length,0))}</div>
+      <section class="panel"><div class="panel-head"><div><h2>Project financial summary</h2><div class="panel-title-note">Actuals are recorded costs. Savings are estimates based on project assumptions.</div></div></div>
+      ${rows ? `<div class="table-wrap"><table><thead><tr><th>Project</th><th>Budget</th><th>Actual spend</th><th>Remaining</th><th>Est. annual savings</th><th>Payback</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table></div>` : empty("No project financials", "Create a project and enter a budget or cost.")}</section>
+      <div class="content-grid" style="margin-top:15px">${state.data.projects.slice(0,4).map(p=>renderProjectFinancials(p)).join("")}</div>`;
+  };
+  const renderDevice = () => {
+    const d = state.data.devices.find(item => item.id === state.selectedDevice);
+    if (!d) { state.selectedDevice = null; return renderFleet(); }
+    const alarmRows = state.data.alarms.filter(a=>a.deviceId===d.id);
+    const retired = d.lifecycleStatus === "RETIRED";
+    main.innerHTML = `${heading(d.serialNumber, `${d.brand} ${d.model} · ${d.project} · ${d.site}`, `<div class="inline-actions"><button class="button" data-action="back-fleet">Back to fleet</button><button class="button" data-action="edit-device" data-id="${esc(d.id)}">Edit inverter</button>${retired ? `<button class="button primary" data-action="restore-device" data-id="${esc(d.id)}">Restore to Fleet</button>` : `${d.lifecycleStatus==="MAINTENANCE" ? `<button class="button" data-action="maintenance" data-id="${esc(d.id)}" data-value="false">Return to Active</button>` : `<button class="button" data-action="maintenance" data-id="${esc(d.id)}" data-value="true">Mark Maintenance</button>`}<button class="button danger" data-action="retire-device" data-id="${esc(d.id)}">Remove from Fleet</button>`}</div>`)}
+      <div class="metric-row">${metric("Health", status(d.status))}${metric("Lifecycle", status(d.lifecycleStatus))}${metric("Integration", status(d.integrationStatus))}${metric("Last communication", d.lastSeenAt ? esc(dateTime(d.lastSeenAt)) : "Never")}${metric(d.telemetryFresh ? "Current output" : "Last PV output", d.pvPowerW == null ? "—" : `${number(d.pvPowerW)} W`, d.telemetryAt ? `${d.telemetryFresh ? "Reading from" : "Stale reading from"} ${dateTime(d.telemetryAt)}` : "No telemetry received")}</div>
+      <div class="content-grid"><div class="stack">
+        ${panel("Current readings", `${d.telemetryFresh ? "" : `<p class="notice" role="status">These are the last reported readings, not live data. Last update: ${esc(dateTime(d.telemetryAt))}.</p>`}<div class="detail-grid">
+          ${[["PV output",d.pvPowerW==null?"—":`${number(d.pvPowerW)} W`],["Energy today",d.pvEnergyTodayKwh==null?"—":`${number(d.pvEnergyTodayKwh)} kWh`],["Load",d.loadPowerW==null?"—":`${number(d.loadPowerW)} W`],["Battery charge",d.batterySoc==null?"—":`${number(d.batterySoc)}%`],["Battery power",d.batteryPowerW==null?"—":`${number(d.batteryPowerW)} W`],["Grid import",d.gridImportW==null?"—":`${number(d.gridImportW)} W`],["Grid export",d.gridExportW==null?"—":`${number(d.gridExportW)} W`],["Inverter temperature",d.inverterTemperatureC==null?"—":`${number(d.inverterTemperatureC)} °C`],["Efficiency",d.inverterEfficiencyPct==null?"—":`${number(d.inverterEfficiencyPct)}%`]].map(([label,value])=>`<div class="detail-item"><span>${label}</span><strong>${value}</strong></div>`).join("")}</div><p class="muted small-text">Telemetry timestamp: ${esc(dateTime(d.telemetryAt))}. Values are not described as live unless the provider timestamp is current.</p>`, "Latest available telemetry")}
+        ${panel("Performance history", (() => {
+          const since = Date.now() - state.historyDays * 86400000;
+          const points = state.telemetry.filter(point=>{
+            const time=new Date(point.timestamp).getTime();
+            if(state.historyDays===0) return (!state.historyFrom||time>=new Date(state.historyFrom).getTime())&&(!state.historyTo||time<new Date(state.historyTo).getTime()+86400000);
+            return time>=since;
+          }).slice().reverse();
+          const max = Math.max(...points.map(point=>Number(point.pvPowerW||0)),1);
+          return `<div class="toolbar" style="padding:0 0 12px;border:0"><label class="screen-reader" for="historyDays">History period</label><select id="historyDays" class="field-control">${[[1,"Today"],[7,"7 days"],[30,"30 days"],[0,"Custom"]].map(([days,label])=>`<option value="${days}" ${state.historyDays===days?"selected":""}>${label}</option>`).join("")}</select>${state.historyDays===0?`<label class="screen-reader" for="historyFrom">From date</label><input id="historyFrom" class="field-control" aria-label="History from date" type="date" value="${esc(state.historyFrom)}"><label class="screen-reader" for="historyTo">To date</label><input id="historyTo" class="field-control" aria-label="History to date" type="date" value="${esc(state.historyTo)}">`:""}<span class="muted small-text">${points.length} recorded readings</span></div>${points.length?`<div class="bar-list">${points.slice(-18).map(point=>`<div class="bar-row"><span>${esc(new Date(point.timestamp).toLocaleString("en-ZA",{weekday:"short",hour:"2-digit",minute:"2-digit"}))}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.max(0,Math.min(100,Number(point.pvPowerW||0)/max*100))}%"></span></span><strong>${number(point.pvPowerW)} W</strong></div>`).join("")}</div>`:empty("No telemetry in this period","Historical readings appear when the integration provides them.")}`;
+        })(), "Historical readings from this inverter")}
+        ${panel("Alarms", alarmRows.length ? alarmsTable(alarmRows) : empty("No open alarms for this inverter", "Resolved alarm history remains available in reports."))}
+        ${panel("Equipment details", `<div class="financial-line"><span>Manufacturer / model</span><strong>${esc(d.brand)} · ${esc(d.model)}</strong></div><div class="financial-line"><span>Serial number</span><strong>${esc(d.serialNumber)}</strong></div><div class="financial-line"><span>Rated power</span><strong>${number(d.ratedPowerKw)} kW</strong></div><div class="financial-line"><span>Firmware</span><strong>${esc(d.firmwareVersion || "Not recorded")}</strong></div><div class="financial-line"><span>Installed</span><strong>${date(d.installedAt)}</strong></div><div class="financial-line"><span>Warranty until</span><strong>${date(d.warrantyUntil)}</strong></div><div class="financial-line"><span>Purchase cost</span><strong>${money(d.purchaseCost)}</strong></div>${d.retiredAt ? `<div class="financial-line"><span>Last retired on</span><strong>${dateTime(d.retiredAt)}</strong></div><div class="financial-line"><span>Retirement reason</span><strong>${esc(d.retirementReason || "Not provided")}</strong></div>${d.retirementNotes ? `<p class="muted small-text">${esc(d.retirementNotes)}</p>` : ""}` : ""}${d.notes ? `<p class="muted small-text">${esc(d.notes)}</p>` : ""}`, "Equipment and lifecycle")}
+      </div><div class="stack">
+        ${panel("Operational state", `<div class="financial-line"><span>Health</span>${status(d.status)}</div><div class="financial-line"><span>Lifecycle</span>${status(d.lifecycleStatus)}</div><div class="financial-line"><span>Last communication</span><strong>${esc(dateTime(d.lastSeenAt))}</strong></div><div class="financial-line"><span>Integration</span>${status(d.integrationStatus)}</div><div class="financial-line"><span>Provider</span><strong>${esc(d.brand)}</strong></div><div class="financial-line"><span>Last successful sync</span><strong>${esc(dateTime(d.lastSyncAt))}</strong></div>${d.integrationError ? `<p class="error-box">${esc(d.integrationError)}</p>` : ""}${d.faultCode ? `<p class="notice">Provider fault detail: ${esc(d.faultCode)}</p>` : ""}`, "Readings from provider: " + (d.integrationMode === "DEMO" ? "demo fixture" : "live provider not verified"))}
+        ${panel("Project costs", `<div class="financial-line"><span>Equipment purchase</span><strong>${money(d.purchaseCost)}</strong></div><p class="muted small-text">Project-level installation and maintenance costs are available in the project financial workspace.</p><button class="button small" data-action="add-cost" data-project="${esc(d.projectId || "")}" data-device="${esc(d.id)}">+ Add Cost</button>`)}
+      </div></div>`;
+  };
+  const renderReports = () => {
+    const type = $("#reportType")?.value || state.reportType;
+    const projectId = $("#reportProject")?.value || state.reportProject || "";
+    const selected = state.data.projects.find(p=>p.id===projectId) || null;
+    const project = selected || state.data.projects[0];
+    const from=$("#reportFrom")?.value || state.reportFrom, to=$("#reportTo")?.value || state.reportTo;
+    const within = value => (!from || String(value || "").slice(0,10) >= from) && (!to || String(value || "").slice(0,10) <= to);
+    const data = type === "fleet" ? state.data.devices.filter(d=>within(d.lastSeenAt)&&(!selected||d.projectId===selected.id)) : type === "alarms" ? state.data.alarms.filter(a=>within(a.occurredAt)&&(!selected||a.projectId===selected.id)) : selected ? type === "costs" ? (selected._costs || []).filter(c=>within(c.costDate)) : [selected] : [];
+    main.innerHTML = `${heading("Reports", "Prepare fleet, alarm, project cost and savings reports for review or export.")}
+      <section class="panel"><div class="toolbar">
+        <label class="screen-reader" for="reportType">Report type</label><select id="reportType" class="field-control">
+          ${[["fleet","Fleet report"],["alarms","Alarm report"],["costs","Project cost report"],["savings","Savings report"],["project","Project performance"]].map(([key,label])=>`<option value="${key}" ${type===key?"selected":""}>${label}</option>`).join("")}
+        </select>
+        <label class="screen-reader" for="reportProject">Project</label><select id="reportProject" class="field-control"><option value="">Select project</option>${state.data.projects.map(p=>`<option value="${esc(p.id)}" ${selected?.id===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select>
+        <label class="screen-reader" for="reportFrom">From date</label><input class="field-control" type="date" id="reportFrom" aria-label="From date" value="${esc(state.reportFrom)}">
+        <label class="screen-reader" for="reportTo">To date</label><input class="field-control" type="date" id="reportTo" aria-label="To date" value="${esc(state.reportTo)}">
+        <button class="button" data-action="print-report">Print</button><button class="button primary" data-action="export-report">Export CSV</button>
+      </div><div class="panel-body" id="reportPreview">${renderReportPreview(type,selected,data)}</div></section>
+      <p class="footer-note">Report periods filter dated cost and alarm records. Energy reporting uses currently available normalized telemetry; historical provider data is not fabricated.</p>`;
+  };
+  const renderReportPreview = (type, project, data) => {
+    if (type === "fleet") return inverterTable(data);
+    if (type === "alarms") return data.length ? alarmsTable(data) : empty("No alarms in this report", "Open alarms appear in the alarm report.");
+    if (!project) return empty("Choose a project", "Select a project to preview financial or performance data.");
+    if (type === "costs") return `<h2>${esc(project.name)} · Cost report</h2><p class="muted small-text">Budget ${money(project.budget,project.currency)} · Actual spend ${money(project.actualSpend,project.currency)} · Remaining ${money(project.remainingBudget,project.currency)}</p>${projectCostTable(data)}`;
+    if (type === "savings") return `<h2>${esc(project.name)} · Savings report</h2><div class="financial-line"><span>Import tariff</span><strong>${project.importTariff == null ? "Not set" : `${money(project.importTariff,project.currency)}/kWh`}</strong></div><div class="financial-line"><span>Energy basis today</span><strong>${number(project.energyTodayKwh)} kWh</strong></div><div class="financial-line"><span>Estimated daily savings</span><strong>${money(project.estimatedDailySavings,project.currency)}</strong></div><div class="financial-line"><span>Estimated annual savings</span><strong>${money(project.estimatedAnnualSavings,project.currency)}</strong></div><div class="financial-line"><span>Estimated payback</span><strong>${project.estimatedPaybackYears == null ? "—" : `${number(project.estimatedPaybackYears)} years`}</strong></div><p class="notice" style="margin-top:12px">${esc(project.savingsBasis)}</p>`;
+    return `<h2>${esc(project.name)} · Performance report</h2><div class="detail-grid">${[["Capacity",`${number(project.capacityKw)} kW`],["Active inverters",project.activeInverters],["Online",project.online],["Offline",project.offline],["Faulted",project.faulted],["Current output",`${number(project.pvPowerW)} W`],["Energy today",`${number(project.energyTodayKwh)} kWh`],["Open alarms",state.data.alarms.filter(a=>a.projectId===project.id).length]].map(([label,value])=>`<div class="detail-item"><span>${label}</span><strong>${value}</strong></div>`).join("")}</div>`;
+  };
+  const projectCostTable = costs => costs.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Quantity</th><th>Unit cost</th><th>Total</th></tr></thead><tbody>${costs.map(c=>`<tr><td>${date(c.costDate)}</td><td>${esc(c.category)}</td><td>${esc(c.description)}</td><td>${number(c.quantity,3)}</td><td>${money(c.unitCost,c.currency)}</td><td>${money(c.total,c.currency)}</td></tr>`).join("")}</tbody></table></div>` : empty("No costs recorded", "Add a project cost to start the report.");
+  const renderIntegrations = async () => {
+    main.innerHTML = `${heading("Integrations", "See which inverter providers are represented and whether a live connector is verified.")}<div class="loading">Loading provider catalog…</div>`;
+    try {
+      const list = await api("/api/v1/integrations/catalog");
+      main.innerHTML = `${heading("Integrations", "Provider support and connection status. Live API access is not assumed.")}<div class="notice" style="margin-bottom:14px">Provider rows in this catalogue describe the connector boundary only. No OEM credentials or undocumented endpoints are bundled with this MVP.</div><section class="panel"><div class="table-wrap"><table><thead><tr><th>Provider</th><th>Live status</th><th>Telemetry</th><th>History</th><th>Alarms</th></tr></thead><tbody>${list.map(item=>`<tr><td><strong>${esc(item.brand)}</strong></td><td>${status(item.liveConfigured?"Connected":"Unverified")}</td><td>${item.telemetry?"Available":"Not available"}</td><td>${item.history?"Available":"Not available"}</td><td>${item.alarms?"Available":"Not available"}</td></tr>`).join("")}</tbody></table></div></section>`;
+    } catch (error) { main.innerHTML += `<div class="error-box" role="alert">${esc(error.message)} <button class="button" data-action="reload">Try again</button></div>`; }
+  };
+  const setupDialog = (title, html, submitLabel = "Save", secondary = "") => {
+    $("#dialogTitle").textContent = title;
+    form.dataset.form = "";
+    form.innerHTML = `${html}<div class="form-error" role="alert"></div><div class="dialog-actions"><span>${secondary}</span><div class="dialog-actions-right"><button class="button" type="button" data-action="close-dialog">Cancel</button><button class="button primary" type="submit">${submitLabel}</button></div></div>`;
+    dialog.showModal();
+  };
+  const siteOptions = projectId => state.data.sites.filter(site=>site.projectId===projectId).map(site=>`<option value="${esc(site.id)}">${esc(site.name)}</option>`).join("");
+  const projectOptions = active => state.data.projects.map(p=>`<option value="${esc(p.id)}" ${p.id===active?"selected":""}>${esc(p.name)}</option>`).join("");
+  const openInverterForm = (device, preferredProject = "") => {
+    const currentProject = device?.projectId || preferredProject || state.selectedProject || document.querySelector("[data-project]")?.dataset.project || "";
+    const html = `<div class="form-grid">
+      <div class="form-field full"><label for="deviceProject">Project <span class="required">*</span></label><select id="deviceProject" class="field-control" required><option value="">Choose project</option>${projectOptions(currentProject)}</select></div>
+      <div class="form-field full"><label for="deviceSite">Site <span class="required">*</span></label><select name="siteId" id="deviceSite" required><option value="">Choose site</option>${siteOptions(currentProject || device?.projectId)}</select></div>
+      <div class="form-field"><label for="deviceBrand">Manufacturer / provider <span class="required">*</span></label><select name="brand" id="deviceBrand" required>${["LUXPOWER","ECT_UNVERIFIED","SOLARMAN","SUNGROW","SOLIS","SOLAREDGE","VICTRON","FRONIUS","SOLAX","SIGENERGY"].map(b=>`<option ${device?.brand===b?"selected":""}>${b}</option>`).join("")}</select></div>
+      <div class="form-field"><label for="deviceModel">Model <span class="required">*</span></label><input name="model" id="deviceModel" maxlength="200" required value="${esc(device?.model || "")}"></div>
+      <div class="form-field"><label for="deviceSerial">Serial number <span class="required">*</span></label><input name="serialNumber" id="deviceSerial" maxlength="200" required value="${esc(device?.serialNumber || "")}"></div>
+      <div class="form-field"><label for="devicePower">Rated power (kW) <span class="required">*</span></label><input name="ratedPowerKw" id="devicePower" type="number" min="0.001" step="0.001" required value="${esc(device?.ratedPowerKw ?? "")}"></div>
+      <div class="form-field full"><label for="deviceExternal">External device ID</label><input name="externalDeviceId" id="deviceExternal" maxlength="200" value="${esc(device?.externalDeviceId || "")}"><span class="form-hint">Required by some provider integrations. Leave blank if not known.</span></div>
+      <div class="form-field"><label for="deviceInstalled">Installation date</label><input name="installedAt" id="deviceInstalled" type="date" value="${esc(device?.installedAt || "")}"></div>
+      <div class="form-field"><label for="deviceWarranty">Warranty until</label><input name="warrantyUntil" id="deviceWarranty" type="date" value="${esc(device?.warrantyUntil || "")}"></div>
+      <div class="form-field"><label for="deviceFirmware">Firmware</label><input name="firmwareVersion" id="deviceFirmware" maxlength="200" value="${esc(device?.firmwareVersion || "")}"></div>
+      <div class="form-field"><label for="deviceCost">Purchase cost (ZAR)</label><input name="purchaseCost" id="deviceCost" type="number" min="0" step="0.01" value="${esc(device?.purchaseCost ?? "")}"></div>
+      <div class="form-field full"><label for="deviceNotes">Notes</label><textarea name="notes" id="deviceNotes" maxlength="2000">${esc(device?.notes || "")}</textarea></div>
+      ${!siteOptions(currentProject).length ? `<div class="form-field full"><span class="form-hint">${currentProject?"This project needs a site before an inverter can be added.":"Create a project and site before adding equipment."}</span> <button class="button small" type="button" data-action="${currentProject?"add-site-from-inverter":"create-project"}" data-project="${esc(currentProject)}">${currentProject?"Add Site":"Create Project"}</button></div>` : ""}
+      <div class="form-field full form-hint">New inverters are added as Active. A purchase cost is also recorded in the project ledger. Demo connectors are labelled clearly.</div>
+    </div>`;
+    setupDialog(device ? "Edit inverter" : "Add inverter", html, device ? "Save changes" : "Add Inverter", device ? "" : `<button class="button" type="submit" name="saveMode" value="another">Save &amp; Add Another</button>`);
+    form.dataset.form = device ? "edit-device" : "add-device";
+    form.dataset.id = device?.id || "";
+    $("#deviceProject").addEventListener("change", event => { $("#deviceSite").innerHTML = `<option value="">Choose site</option>${siteOptions(event.target.value)}`; });
+  };
+  const openProjectForm = project => {
+    const html = `<div class="form-grid">
+      <div class="form-field full"><label for="projectName">Project name <span class="required">*</span></label><input name="name" id="projectName" maxlength="200" required value="${esc(project?.name || "")}"></div>
+      <div class="form-field"><label for="projectCustomer">Customer</label><input name="customer" id="projectCustomer" maxlength="200" value="${esc(project?.customer || "")}"></div>
+      <div class="form-field"><label for="projectStatus">Status</label><select name="status" id="projectStatus">${["PLANNING","ACTIVE","COMMISSIONING","OPERATIONAL","MAINTENANCE","COMPLETED","ARCHIVED"].map(s=>`<option ${project?.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
+      <div class="form-field full"><label for="projectLocation">Location</label><input name="location" id="projectLocation" maxlength="300" value="${esc(project?.location || "")}"></div>
+      <div class="form-field"><label for="projectCurrency">Currency code <span class="required">*</span></label><input name="currency" id="projectCurrency" maxlength="3" minlength="3" pattern="[A-Za-z]{3}" title="Enter a three-letter currency code, for example ZAR." value="${esc(project?.currency || "ZAR")}" required></div>
+      <div class="form-field"><label for="projectBudget">Budget (${esc(project?.currency || "ZAR")})</label><input name="budget" id="projectBudget" type="number" min="0" step="0.01" value="${esc(project?.budget ?? "")}"></div>
+      <div class="form-field"><label for="projectCapacity">Capacity (kW)</label><input name="capacityKw" id="projectCapacity" type="number" min="0" step="0.001" value="${esc(project?.capacityKw ?? "")}"></div>
+      <div class="form-field"><label for="projectStart">Start date</label><input name="startDate" id="projectStart" type="date" value="${esc(project?.startDate || "")}"></div>
+      <div class="form-field"><label for="projectCommissioned">Commissioning date</label><input name="commissioningDate" id="projectCommissioned" type="date" value="${esc(project?.commissioningDate || "")}"></div>
+      <div class="form-field"><label for="projectImport">Import tariff (${esc(project?.currency || "ZAR")}/kWh)</label><input name="importTariff" id="projectImport" type="number" min="0" step="0.0001" value="${esc(project?.importTariff ?? "")}"></div>
+      <div class="form-field"><label for="projectExport">Export tariff (${esc(project?.currency || "ZAR")}/kWh)</label><input name="exportTariff" id="projectExport" type="number" min="0" step="0.0001" value="${esc(project?.exportTariff ?? "")}"></div>
+      <div class="form-field full"><label for="projectDescription">Description</label><textarea name="description" id="projectDescription" maxlength="2000">${esc(project?.description || "")}</textarea></div>
+      <div class="form-field full"><label for="projectNotes">Notes</label><textarea name="notes" id="projectNotes" maxlength="2000">${esc(project?.notes || "")}</textarea></div>
+    </div>`;
+    setupDialog(project ? "Edit project" : "Create project", html, project ? "Save project" : "Create project");
+    form.dataset.form = project ? "edit-project" : "create-project";
+    form.dataset.id = project?.id || "";
+  };
+  const openSiteForm = projectId => {
+    setupDialog("Add site", `<div class="form-grid">
+      <div class="form-field full"><label for="siteName">Site name <span class="required">*</span></label><input name="name" id="siteName" maxlength="200" required></div>
+      <div class="form-field full"><label for="siteAddress">Address</label><input name="address" id="siteAddress" maxlength="500"></div>
+      <div class="form-field"><label for="siteProvince">Province</label><input name="province" id="siteProvince" maxlength="100"></div>
+      <div class="form-field"><label for="siteMunicipality">Municipality</label><input name="municipality" id="siteMunicipality" maxlength="200"></div>
+      <div class="form-field"><label for="sitePv">PV capacity (kW)</label><input name="ratedPvKw" id="sitePv" type="number" min="0" step="0.001"></div>
+      <div class="form-field"><label for="siteInverter">Inverter capacity (kW)</label><input name="ratedInverterKw" id="siteInverter" type="number" min="0" step="0.001"></div>
+    </div>`, "Add site");
+    form.dataset.form = "add-site";
+    form.dataset.id = projectId;
+  };
+  const openCostForm = (projectId, deviceId = "") => {
+    const p = state.data.projects.find(item=>item.id===projectId);
+    setupDialog("Add project cost", `<div class="form-grid">
+      <div class="form-field full"><label for="costCategory">Category <span class="required">*</span></label><select name="category" id="costCategory" required>${["INVERTER","PANELS","BATTERY","INSTALLATION","LABOUR","ENGINEERING","ELECTRICAL","TRANSPORT","MAINTENANCE","REPLACEMENT","MONITORING","OTHER"].map(item=>`<option>${item}</option>`).join("")}</select></div>
+      <div class="form-field full"><label for="costDescription">Description <span class="required">*</span></label><input name="description" id="costDescription" maxlength="500" required></div>
+      <div class="form-field"><label for="costQuantity">Quantity <span class="required">*</span></label><input name="quantity" id="costQuantity" type="number" min="0.001" step="0.001" value="1" required></div>
+      <div class="form-field"><label for="costUnit">Unit cost (${esc(p?.currency || "ZAR")}) <span class="required">*</span></label><input name="unitCost" id="costUnit" type="number" min="0" step="0.01" required></div>
+      <div class="form-field"><label for="costDate">Date</label><input name="costDate" id="costDate" type="date" value="${localDateValue()}"></div>
+      <div class="form-field"><label for="costSupplier">Supplier</label><input name="supplier" id="costSupplier" maxlength="200"></div>
+      <div class="form-field"><label for="costRef">Reference</label><input name="reference" id="costRef" maxlength="200"></div>
+      <div class="form-field full"><label for="costNotes">Notes</label><textarea name="notes" id="costNotes" maxlength="2000"></textarea></div>
+      <div class="form-field"><label for="costSite">Site</label><select name="siteId" id="costSite"><option value="">Project-wide</option>${state.data.sites.filter(site=>site.projectId===projectId).map(site=>`<option value="${esc(site.id)}">${esc(site.name)}</option>`).join("")}</select></div>
+      <div class="form-field"><label for="costDevice">Inverter</label><select name="deviceId" id="costDevice"><option value="">Not equipment-specific</option>${state.data.devices.filter(device=>device.projectId===projectId&&device.lifecycleStatus!=="RETIRED").map(device=>`<option value="${esc(device.id)}" ${device.id===deviceId?"selected":""}>${esc(device.serialNumber)} · ${esc(device.model)}</option>`).join("")}</select></div>
+      <div class="form-field full form-hint">Total is calculated from quantity × unit cost and rounded to cents.</div>
+    </div>`, "Save cost");
+    form.dataset.form = "add-cost";
+    form.dataset.id = projectId;
+  };
+  const openRetireForm = id => {
+    setupDialog("Remove inverter from fleet", `<p>Retire this inverter from active operations? Telemetry, alarms and costs will remain available in history.</p>
+      <div class="form-grid"><div class="form-field"><label for="retireDate">Retirement date</label><input name="retiredAt" id="retireDate" type="date" value="${localDateValue()}"></div>
+      <div class="form-field"><label for="retireReason">Reason</label><input name="reason" id="retireReason" maxlength="500" placeholder="e.g. Replaced after failure"></div>
+      <div class="form-field full"><label for="retireNotes">Notes</label><textarea name="notes" id="retireNotes" maxlength="2000"></textarea></div></div>`, "Remove from Fleet");
+    form.dataset.form = "retire-device"; form.dataset.id = id;
+  };
+  const serialize = formElement => {
+    const data = {};
+    new FormData(formElement).forEach((value,key) => {
+      if (key === "saveMode" || value === "") return;
+      const element = formElement.elements.namedItem(key);
+      if (element?.type === "number") data[key] = Number(value);
+      else data[key] = value;
+    });
+    return data;
+  };
+  const showFormError = message => { const el = $(".form-error",form); el.textContent = message; el.style.display = "block"; };
+  const notify = message => { const el = document.createElement("div"); el.setAttribute("role","status"); el.className="notice"; el.textContent=message; main.prepend(el); setTimeout(()=>el.remove(),4500); };
+  const csvCell = value => {
+    const text=String(value ?? "");
+    const safe=/^\s*[=+\-@]/.test(text) ? `'${text}` : text;
+    return `"${safe.replaceAll('"','""')}"`;
+  };
+  const downloadCsv = (name, headers, rows) => {
+    const csv = [headers, ...rows].map(row=>row.map(csvCell).join(",")).join("\r\n");
+    const link = document.createElement("a"); link.href=URL.createObjectURL(new Blob(["\ufeff",csv],{type:"text/csv;charset=utf-8"})); link.download=name; link.click(); URL.revokeObjectURL(link.href);
+  };
+  const exportReport = async () => {
+    const type=$("#reportType")?.value || "fleet";
+    const projectId=$("#reportProject")?.value || "";
+    const project=state.data.projects.find(p=>p.id===projectId);
+    if (["costs","savings","project"].includes(type) && !project) return notify("Choose a project before exporting this report.");
+    await api("/api/v1/reports/generate",{method:"POST",body:JSON.stringify({type:type.toUpperCase(),projectId:project?.id||null})});
+    const from=$("#reportFrom")?.value || state.reportFrom, to=$("#reportTo")?.value || state.reportTo;
+    const within = value => (!from || String(value || "").slice(0,10) >= from) && (!to || String(value || "").slice(0,10) <= to);
+    if(type==="fleet") return downloadCsv("fleet-report.csv",["Project","Site","Manufacturer","Model","Serial","Health","Lifecycle","Rated power kW","PV output W","Energy today kWh","Last communication","Integration"],state.data.devices.filter(d=>within(d.lastSeenAt)&&(!project||d.projectId===project.id)).map(d=>[d.project,d.site,d.brand,d.model,d.serialNumber,d.status,d.lifecycleStatus,d.ratedPowerKw,d.pvPowerW,d.pvEnergyTodayKwh,d.lastSeenAt,d.integrationStatus]));
+    if(type==="alarms") return downloadCsv("alarm-report.csv",["Severity","Project","Site","Manufacturer","Serial","Code","Message","First seen","Last seen","Status","Acknowledged","Cleared"],state.data.alarms.filter(a=>within(a.occurredAt)&&(!project||a.projectId===project.id)).map(a=>[a.severity,a.project,a.site,a.brand,a.serialNumber,a.code,a.message,a.occurredAt,a.lastSeenAt,a.clearedAt?"Cleared":a.acknowledgedAt?"Acknowledged":"Open",a.acknowledgedAt,a.clearedAt]));
+    if(type==="costs") return downloadCsv(`${project.name}-cost-report.csv`,["Date","Category","Description","Quantity","Unit cost","Total","Currency","Supplier","Reference"],(project._costs||[]).filter(c=>within(c.costDate)).map(c=>[c.costDate,c.category,c.description,c.quantity,c.unitCost,c.total,c.currency,c.supplier,c.reference]));
+    if(type==="savings") return downloadCsv(`${project.name}-savings-report.csv`,["Project","Currency","Import tariff","Energy today kWh","Estimated daily savings","Estimated annual savings","Estimated annual return percent","Estimated payback years","Calculation basis"],[[project.name,project.currency,project.importTariff,project.energyTodayKwh,project.estimatedDailySavings,project.estimatedAnnualSavings,project.estimatedAnnualRoiPercent,project.estimatedPaybackYears,project.savingsBasis]]);
+    return downloadCsv(`${project.name}-performance-report.csv`,["Project","Status","Capacity kW","Sites","Active inverters","Online","Offline","Faulted","Current PV output W","Energy today kWh","Open alarms"],[[project.name,project.status,project.capacityKw,project.siteCount,project.activeInverters,project.online,project.offline,project.faulted,project.pvPowerW,project.energyTodayKwh,state.data.alarms.filter(a=>a.projectId===project.id).length]]);
+  };
+  document.addEventListener("click", async event => {
+    const button = event.target.closest("[data-action], [data-page]");
+    if (!button) return;
+    if (button.dataset.page) { state.page=button.dataset.page; state.selectedDevice=null; state.selectedProject=null; render(); return; }
+    const action=button.dataset.action, id=button.dataset.id;
+    try {
+      if(action==="reload") return reload();
+      if(action==="close-dialog") return dialog.close();
+      if(action==="navigate") { state.page=button.dataset.page; state.selectedDevice=null; state.selectedProject=null; render(); return; }
+      if(action==="add-inverter") return openInverterForm();
+      if(action==="create-project") { if(dialog.open) dialog.close(); return openProjectForm(); }
+      if(action==="edit-project") return openProjectForm(state.data.projects.find(p=>p.id===id));
+      if(action==="add-site") return openSiteForm(button.dataset.project);
+      if(action==="add-site-from-inverter") { const projectId=button.dataset.project; dialog.close(); return openSiteForm(projectId); }
+      if(action==="add-cost") return openCostForm(button.dataset.project || state.selectedProject, button.dataset.device);
+      if(action==="open-project") { state.page="projects"; state.selectedProject=id; state.projectTab="overview"; return render(); }
+      if(action==="view-project") { state.page="projects"; state.selectedProject=id; state.projectTab="financials"; return render(); }
+      if(action==="project-tab") { state.projectTab=button.dataset.tab; return render(); }
+      if(action==="view-device") { state.page="fleet"; state.selectedDevice=id; state.telemetry=[]; state.historyDays=7; render(); try { state.telemetry=await api(`/api/v1/devices/${id}/telemetry`); render(); } catch(error) { notify(`Could not load telemetry history: ${error.message}`); } return; }
+      if(action==="back-fleet") { state.selectedDevice=null; state.page="fleet"; return render(); }
+      if(action==="edit-device") return openInverterForm(state.data.devices.find(d=>d.id===id));
+      if(action==="retire-device") return openRetireForm(id);
+      if(action==="restore-device") { await api(`/api/v1/devices/${id}/restore`,{method:"POST"}); state.selectedDevice=null; await reload(); notify("Inverter restored to the active fleet."); return; }
+      if(action==="maintenance") { await api(`/api/v1/devices/${id}/maintenance`,{method:"POST",body:JSON.stringify({maintenance:button.dataset.value==="true"})}); await reload(); notify(button.dataset.value==="true"?"Inverter marked for maintenance.":"Inverter returned to active service."); return; }
+      if(action==="ack-alarm") { await api(`/api/v1/alarms/${id}/acknowledge`,{method:"POST"}); await reload(); return; }
+      if(action==="clear-alarm" && confirm("Clear this alarm? It will remain in the alarm history.")) { await api(`/api/v1/alarms/${id}/clear`,{method:"POST"}); await reload(); return; }
+      if(action==="view-costs") { state.page="reports"; state.reportType="costs"; state.reportProject=id; render(); return; }
+      if(action==="project-report") { state.page="reports"; state.reportType="project"; state.reportProject=id; render(); setTimeout(()=>{const select=$("#reportProject"); if(select){select.value=id;select.dispatchEvent(new Event("change"));}},0); return; }
+      if(action==="print-report") { window.print(); return; }
+      if(action==="export-report") { await exportReport(); return; }
+    } catch(error) { notify(error.message); }
+  });
+  document.addEventListener("input", event => {
+    if(event.target.id==="fleetSearch") {
+      const start=event.target.selectionStart, end=event.target.selectionEnd;
+      renderFleet();
+      const input=$("#fleetSearch"); input?.focus(); input?.setSelectionRange(start,end);
+    }
+  });
+  document.addEventListener("change", event => {
+    if(["fleetProject","fleetHealth","fleetBrand","fleetIntegration","fleetSite","fleetLifecycle","fleetSort","fleetDirection"].includes(event.target.id)) return renderFleet();
+    if(["alarmStatus","alarmSeverity","alarmProject","alarmSite","alarmDevice"].includes(event.target.id)) return renderAlarms();
+    if(["reportType","reportProject","reportFrom","reportTo"].includes(event.target.id)) { state.reportType=$("#reportType").value; state.reportProject=$("#reportProject").value; state.reportFrom=$("#reportFrom").value; state.reportTo=$("#reportTo").value; renderReports(); }
+    if(event.target.id==="historyDays") { state.historyDays=Number(event.target.value); renderDevice(); }
+    if(event.target.id==="historyFrom"||event.target.id==="historyTo") { state.historyFrom=$("#historyFrom").value; state.historyTo=$("#historyTo").value; renderDevice(); }
+  });
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    if(!form.reportValidity()) return;
+    const kind=form.dataset.form, id=form.dataset.id, data=serialize(form);
+    const submitter=event.submitter;
+    const another=submitter?.value==="another";
+    const submitButton=submitter;
+    if(submitButton) submitButton.disabled=true;
+    try {
+      if(kind==="add-device") await api("/api/v1/devices",{method:"POST",body:JSON.stringify(data)});
+      if(kind==="edit-device") await api(`/api/v1/devices/${id}`,{method:"PUT",body:JSON.stringify(data)});
+      if(kind==="create-project") {
+        const created=await api("/api/v1/projects",{method:"POST",body:JSON.stringify(data)});
+        await reload(); state.page="projects"; state.selectedProject=created.id; state.projectTab="overview"; render();
+        if(another){dialog.close();openProjectForm();return;}
+        dialog.close();notify("Project created.");return;
+      }
+      if(kind==="edit-project") await api(`/api/v1/projects/${id}`,{method:"PUT",body:JSON.stringify(data)});
+      if(kind==="add-site") await api(`/api/v1/projects/${id}/sites`,{method:"POST",body:JSON.stringify(data)});
+      if(kind==="add-cost") await api(`/api/v1/projects/${id}/costs`,{method:"POST",body:JSON.stringify(data)});
+      if(kind==="retire-device") await api(`/api/v1/devices/${id}/retire`,{method:"POST",body:JSON.stringify(data)});
+      if(another && kind==="add-device") {
+        const projectId=state.data.sites.find(site=>site.id===data.siteId)?.projectId || "";
+        dialog.close(); await reload(); openInverterForm(null,projectId); notify("Inverter added. Add the next one when ready."); return;
+      }
+      dialog.close();
+      if(kind==="edit-device") state.selectedDevice=id;
+      if(kind==="retire-device") state.selectedDevice=id;
+      await reload();
+      notify(kind==="add-device"?"Inverter added to the fleet.":kind==="edit-device"?"Inverter details updated.":kind==="add-cost"?"Project cost recorded.":kind==="add-site"?"Site added to project.":kind==="retire-device"?"Inverter retired. History has been preserved.":"Changes saved.");
+    } catch(error) { showFormError(error.message); }
+    finally { if(submitButton) submitButton.disabled=false; }
+  });
+  dialog.addEventListener("click", event => { if(event.target===dialog) dialog.close(); });
+  render();
+  reload();
+  setInterval(reload,60000);
+})();
 </script>
 </body>
 </html>

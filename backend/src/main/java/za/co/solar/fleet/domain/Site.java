@@ -13,6 +13,9 @@ public class Site {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id", nullable = false)
     public Tenant tenant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    public Project project;
     @Column(name = "name", nullable = false) public String name;
     @Column(name = "address") public String address;
     @Column(name = "province") public String province;

@@ -1,6 +1,6 @@
-# Current repository audit
+# Baseline repository audit
 
-Audit performed 2026-10-06 against the checked-in source tree. The checkout has no `.git` directory in the project root, so repository history and already-applied migration state could not be verified. The initial build compiles successfully, but Maven reports that there are no tests.
+Baseline audit performed 2026-10-06 before the operator-workflow changes. The project root is a Git checkout with an initial commit; deployment migration state is not available locally. Findings below describe that baseline. See the follow-up status at the end for changes and remaining risks verified on 2026-10-07.
 
 ## Architecture
 
@@ -48,3 +48,13 @@ Audit performed 2026-10-06 against the checked-in source tree. The checkout has 
 4. Replace credential JSON storage and isolate provider execution from database transactions.
 5. Add measured ingestion, aggregation and dashboard queries before claiming scale targets.
 6. Add tests and report exact local, mocked, approval-required and unimplemented functionality.
+
+## Follow-up status (2026-10-07)
+
+- Added V2-V5 forward migrations for telemetry provenance/freshness and alarm fingerprints, projects/costs/lifecycle/audit, a retired demo fixture and retirement notes.
+- Added operator API-key gating for non-demo deployments, tenant-scoped service lookups, sanitized API errors and security headers. The key is a shared deployment credential, not per-user authentication; this does not provide multi-tenant SaaS identity or roles.
+- Added project, fleet, lifecycle, alarm, financial and report workflows in the dashboard. Demo fixtures exercise offline, fault, stale telemetry, integration failure and retirement states.
+- Removed the unused global/N+1 dashboard service; the active summary uses a latest-per-device query. Actuator exposure is limited to health.
+- Current output and savings exclude telemetry older than 15 minutes. Money uses decimal persistence/calculation and project currency; mixed-currency totals are not combined.
+- Nine unit/contract tests and JavaScript syntax validation pass. A fresh PostgreSQL 16 instance applied V1-V5 and passed Hibernate schema validation; API smoke tests covered project/site/inverter/cost, currency lock, detail, retirement/restoration, reports and audit. Browser UI automation and tenant-isolation integration tests remain unverified.
+- Remaining risks: existing plaintext-capable integration credential storage, unconfigured OEM live APIs, non-paginated fleet/cost data, polling calls within a transaction, and lack of PostgreSQL-backed migration/tenant tests. Do not expose demo mode publicly or deploy this as customer-facing SaaS.
