@@ -214,6 +214,7 @@
   const form = document.getElementById("actionForm");
   let operatorKey = "";
   let keyPrompt = null;
+  let reloadInProgress = false;
   const $ = (selector, root = document) => root.querySelector(selector);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
   const money = (value, currency = "ZAR") => value == null ? "—" : new Intl.NumberFormat("en-ZA", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value));
@@ -229,7 +230,7 @@
     const send = () => {
       const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
       if (operatorKey) headers["X-Operator-Key"] = operatorKey;
-      return fetch(path, { ...options, headers });
+      return fetch(path, { ...options, headers, signal: options.signal || AbortSignal.timeout(15000) });
     };
     let response = await send();
     if (response.status === 401) {
@@ -254,7 +255,14 @@
   const status = (text, extra = "") => `<span class="status ${className(text)} ${extra}">${esc(text || "Unknown")}</span>`;
   const selectedProject = () => (state.data?.projects || []).find(project => project.id === state.selectedProject);
   const reload = async () => {
-    main.innerHTML = `<div class="loading" role="status">Updating fleet information…</div>`;
+    if (reloadInProgress) return;
+    reloadInProgress = true;
+    const hasData = state.data !== null;
+    if (hasData) {
+      $("#lastUpdated").textContent = "Refreshing…";
+    } else {
+      main.innerHTML = `<div class="loading" role="status">Loading fleet information…</div>`;
+    }
     try {
       const [summary, projects, devices, alarms, activity, sites, costs] = await Promise.all([
         api("/api/v1/dashboard/summary"), api("/api/v1/projects"), api("/api/v1/devices?includeRetired=true"),
@@ -267,8 +275,18 @@
       $("#lastUpdated").textContent = `Updated ${new Date().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}`;
       render();
     } catch (error) {
-      $("#lastUpdated").textContent = "Could not update";
-      main.innerHTML = `<div class="page-heading"><div><h1>Fleet overview</h1><p class="subtitle">Fleet information could not be loaded.</p></div></div><div class="error-box" role="alert"><strong>Unable to reach the fleet service.</strong><p>${esc(error.message)}</p><button class="button" data-action="reload">Try again</button></div>`;
+      $("#lastUpdated").textContent = hasData ? "Showing saved data · update failed" : "Could not update";
+      if (hasData) {
+        const notice = document.createElement("div");
+        notice.className = "error-box";
+        notice.setAttribute("role", "alert");
+        notice.innerHTML = `<strong>Could not refresh fleet data.</strong><p>${esc(error.message)} Existing data is still shown.</p><button class="button" data-action="reload">Try again</button>`;
+        main.prepend(notice);
+      } else {
+        main.innerHTML = `<div class="page-heading"><div><h1>Fleet overview</h1><p class="subtitle">Fleet information could not be loaded.</p></div></div><div class="error-box" role="alert"><strong>Unable to reach the fleet service.</strong><p>${esc(error.message)}</p><button class="button" data-action="reload">Try again</button></div>`;
+      }
+    } finally {
+      reloadInProgress = false;
     }
   };
   const pageTitle = { overview: "Fleet overview", projects: "Projects", fleet: "Fleet", alarms: "Alarms", financials: "Financials", reports: "Reports", integrations: "Integrations" };
