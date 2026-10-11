@@ -43,11 +43,18 @@ Demo mode is intentionally unauthenticated and is for local demonstration only. 
 
 ## Run locally
 
-### Option A: Docker Compose
+### Option A: Docker Compose (recommended)
+
+Requires Docker with Compose. Creates a dedicated bridge network (`solarfleet-net`) so the app reaches PostgreSQL as host `postgres`.
 
 ```bash
-docker compose up --build
+cp .env.example .env
+# Edit .env and replace DB_PASSWORD with a strong local development password.
+docker compose up --build -d
+# or: make docker-up
 ```
+
+The local Compose ports bind to `127.0.0.1` by default so the unauthenticated demo is not exposed to your LAN unintentionally. Adjust the port bindings deliberately if your development setup requires LAN access.
 
 Open:
 
@@ -55,13 +62,31 @@ Open:
 - Health: http://localhost:8080/actuator/health
 - API: http://localhost:8080/api/v1/dashboard/summary
 
-### Option B: Maven
+Stop with `docker compose down` or `make docker-down`.
 
-Requirements: Java 21+, Maven 3.9+
+#### If `localhost:8080` returns an empty response
+
+If the app container repeatedly restarts, one possible cause is that a persistent PostgreSQL volume still has an older database password than the current `.env` file. Recreating the container does not change a password already stored inside PostgreSQL. To repair this without deleting database data:
 
 ```bash
+# From the project root; use a generated hex password in .env.
+openssl rand -hex 24
+# Put the generated value on the DB_PASSWORD= line in .env, then run:
+bash scripts/fix-local-startup.sh
+```
+
+The recovery script recreates the PostgreSQL container while preserving its named data volume, synchronises the `solarfleet` database role password to the Compose environment, rebuilds the app, and waits for the health check. If the app still fails, it prints container exit/OOM/restart information and the latest app/database logs. It does not run `docker compose down -v` or delete the database volume.
+
+### Option B: Maven Wrapper
+
+Requirements: Java 21+. The Maven Wrapper (`./mvnw`) downloads Maven 3.9.12 on first use (network required once).
+
+```bash
+# Start PostgreSQL first (Compose DB only):
+docker compose up -d postgres
+
 cd backend
-mvn spring-boot:run
+./mvnw spring-boot:run
 ```
 
 Set PostgreSQL variables as needed:
@@ -72,9 +97,11 @@ export DB_USERNAME=solarfleet
 export DB_PASSWORD=solarfleet
 ```
 
+Useful Make targets: `make test`, `make build`, `make health`.
+
 ## Demo tenant
 
-The application seeds one demo tenant, four sites and one demo device per requested brand when `APP_DEMO_DATA=true`.
+When `APP_DEMO_DATA=true`, startup ensures a demo tenant, project, one site per brand, and **one active inverter for every supported brand**, plus seed telemetry/alarms. Sigenergy also includes a retired unit for lifecycle demos. Fixture states cover healthy, offline, fault, stale telemetry and sync-error.
 
 Brands represented:
 
@@ -99,7 +126,7 @@ Brands represented:
 6. Add weather/irradiance and tariff datasets for PR, anomaly and financial analytics.
 7. Add remote-control commands only after vendor capability validation and safety/approval workflows.
 
-Current route behavior and the exact security/reporting boundary are documented in [REST-API.md](docs/REST-API.md). The project financial formula is described in [DATABASE.md](docs/DATABASE.md).
+Current route behavior and the exact security/reporting boundary are documented in [REST-API.md](docs/REST-API.md). The project financial formula is described in [DATABASE.md](docs/DATABASE.md). Findings, release gates and verification limits from the latest engineering review are in [SAAS_READINESS_AUDIT.md](docs/SAAS_READINESS_AUDIT.md).
 
 ## Current OEM verification notes
 

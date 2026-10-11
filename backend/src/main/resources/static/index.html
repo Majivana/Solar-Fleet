@@ -168,15 +168,195 @@
       th { background:#f1f3f1!important }
       .project-grid { grid-template-columns:1fr 1fr }
     }
+
+    /* Product UI refinement: calm, high-contrast energy-operations workspace. */
+    :root {
+      --canvas:#f3f6f4;
+      --surface:#ffffff;
+      --ink:#17271f;
+      --muted:#65756b;
+      --line:#e0e8e2;
+      --green:#176747;
+      --green-soft:#e6f4eb;
+      --amber:#95610c;
+      --amber-soft:#fff3d9;
+      --red:#a43f37;
+      --red-soft:#fbe9e7;
+      --blue:#326d8d;
+      --shadow:0 4px 18px rgba(21,47,33,.045);
+    }
+    html { scroll-behavior:smooth }
+    body { background:var(--canvas); letter-spacing:-.006em }
+    .skip-link { position:fixed; z-index:20; top:8px; left:8px; transform:translateY(-150%); padding:10px 14px; border-radius:8px; background:#fff; color:var(--green); box-shadow:0 4px 14px #0002; font-weight:700 }
+    .skip-link:focus { transform:translateY(0) }
+    .topbar { height:72px; padding:0 clamp(16px,2.6vw,36px); box-shadow:0 1px 0 rgba(22,45,31,.02); }
+    .brand { gap:12px; min-width:max-content }
+    .brand-mark { width:38px; height:38px; border:0; border-radius:12px; color:#fff; background:linear-gradient(145deg,#1d7954,#0f4f38); box-shadow:0 5px 12px rgba(21,103,71,.17) }
+    .brand-mark svg { width:22px; height:22px; display:block }
+    .brand-copy { display:grid; gap:1px; line-height:1.1 }
+    .brand-copy strong { font-size:15px; letter-spacing:-.025em }
+    .brand-copy small { color:#7c8980; font-size:9px; font-weight:750; letter-spacing:.13em }
+    .top-actions { gap:10px }
+    #lastUpdated { font-size:12px; white-space:nowrap }
+    .demo-tag { border-radius:999px; padding:6px 10px; letter-spacing:.07em }
+    .layout { grid-template-columns:232px minmax(0,1fr); max-width:1760px }
+    nav { position:sticky; top:72px; align-self:start; height:calc(100vh - 72px); min-height:0; overflow-y:auto; padding:27px 13px; border-right:0; background:linear-gradient(180deg,#122e23 0%,#18392b 100%); }
+    .nav-label { margin:0 12px 10px; color:#9fb9aa; font-size:10px; letter-spacing:.13em }
+    .nav-list { gap:4px; margin-bottom:28px }
+    .nav-item { display:flex; align-items:center; gap:11px; width:100%; min-height:43px; padding:10px 12px; border-radius:9px; color:#dce9e0; font-weight:550; transition:background .16s ease,color .16s ease,transform .16s ease }
+    .nav-item::before { display:inline-grid; place-items:center; width:20px; flex:0 0 20px; font-size:16px; line-height:1; opacity:.88 }
+    .nav-item[data-page="overview"]::before { content:"◫" }
+    .nav-item[data-page="projects"]::before { content:"▦" }
+    .nav-item[data-page="fleet"]::before { content:"◉" }
+    .nav-item[data-page="alarms"]::before { content:"⚑" }
+    .nav-item[data-page="financials"]::before { content:"↗" }
+    .nav-item[data-page="reports"]::before { content:"▤" }
+    .nav-item[data-page="integrations"]::before { content:"⛭" }
+    .nav-item:hover { background:rgba(255,255,255,.08); color:#fff; transform:translateX(1px) }
+    .nav-item[aria-current="page"] { background:#2b5941; color:#fff; box-shadow:inset 3px 0 #d7e8a5; font-weight:700 }
+    main { padding:32px clamp(20px,3.1vw,48px) 54px; }
+    .page-heading { position:relative; gap:22px; align-items:center; margin-bottom:23px; }
+    h1 { font-size:clamp(25px,2vw,31px); font-weight:750; letter-spacing:-.045em }
+    h2 { font-size:15px; font-weight:750; letter-spacing:-.025em }
+    .subtitle { margin-top:7px; line-height:1.55; max-width:760px; font-size:13px }
+    #main[data-page="overview"] > .page-heading { min-height:132px; margin-bottom:20px; padding:25px 28px; overflow:hidden; isolation:isolate; border-radius:16px; background:linear-gradient(112deg,#123e2c 0%,#176747 59%,#287651 100%); box-shadow:0 12px 25px rgba(16,70,47,.11) }
+    #main[data-page="overview"] > .page-heading::after { content:""; position:absolute; z-index:-1; width:250px; height:250px; border:1px solid rgba(239,250,239,.12); border-radius:50%; right:10%; top:-155px; box-shadow:0 0 0 25px rgba(255,255,255,.025),0 0 0 55px rgba(255,255,255,.025),0 0 0 85px rgba(255,255,255,.025) }
+    #main[data-page="overview"] > .page-heading h1 { color:#fff }
+    #main[data-page="overview"] > .page-heading .subtitle { color:#d0e3d8 }
+    #main[data-page="overview"] > .page-heading .button.primary { color:#174c35; background:#fff; border-color:#fff; box-shadow:0 3px 8px #092f1e35 }
+    #main[data-page="overview"] > .page-heading .button.primary:hover { background:#f0f7f2; border-color:#f0f7f2 }
+    .button { min-height:38px; padding:8px 13px; border-color:#d5e0d8; border-radius:9px; font-weight:650; transition:background .15s ease,border-color .15s ease,box-shadow .15s ease,transform .15s ease }
+    .button:hover { box-shadow:0 3px 8px rgba(21,47,33,.06); transform:translateY(-1px) }
+    .button.primary { box-shadow:0 3px 8px rgba(23,103,71,.12) }
+    .button.danger { background:#fffafa }
+    .button.small { min-height:32px; padding:6px 10px; border-radius:8px }
+    .metric-row { gap:12px; margin-bottom:18px }
+    .metric { position:relative; padding:17px 17px 16px; overflow:hidden; border-radius:12px; box-shadow:var(--shadow); transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease }
+    .metric:hover { transform:translateY(-2px); box-shadow:0 9px 22px rgba(21,47,33,.07); border-color:#d3e2d8 }
+    .metric::before { content:""; position:absolute; inset:0 auto 0 0; width:3px; background:#c4d5ca }
+    .metric-row .metric:nth-child(1)::before { background:#3e9b6d }
+    .metric-row .metric:nth-child(2)::before { background:#d0645c }
+    .metric-row .metric:nth-child(3)::before { background:#cf9b39 }
+    .metric-row .metric:nth-child(4)::before { background:#d49a28 }
+    .metric-row .metric:nth-child(5)::before { background:#4b8cac }
+    .metric-label { font-size:11px; font-weight:700; letter-spacing:.025em }
+    .metric-value { margin-top:8px; font-size:clamp(22px,1.8vw,27px); letter-spacing:-.045em }
+    .metric-note { margin-top:6px; font-size:11px; line-height:1.4 }
+    .content-grid { gap:17px }
+    .stack { gap:17px }
+    .panel { border-radius:13px; box-shadow:var(--shadow); overflow:hidden }
+    .panel-head { padding:17px 19px; gap:14px; background:linear-gradient(180deg,#fff 0%,#fdfefd 100%) }
+    .panel-body { padding:17px 19px }
+    .panel-title-note { font-size:11px; line-height:1.5 }
+    .status { border-radius:999px; padding:4px 9px; font-size:10px; letter-spacing:.015em }
+    .status::before { width:6px; height:6px; box-shadow:0 0 0 2px rgba(255,255,255,.35) }
+    .table-wrap { scrollbar-color:#c9d7cd #f6f8f6; scrollbar-width:thin }
+    table { font-size:12px }
+    th { padding:11px 12px; color:#697a70; background:#f7faf8; border-bottom-color:#e5ece7; letter-spacing:.075em }
+    td { padding:12px; line-height:1.45 }
+    tbody tr { transition:background .12s ease }
+    tbody tr:hover { background:#f6faf7 }
+    .link-button { text-underline-offset:3px }
+    .toolbar { gap:9px; padding:14px 17px; background:#fbfcfb }
+    .field-control { min-height:38px; border-color:#d3ded6; border-radius:9px; transition:border-color .15s ease,box-shadow .15s ease }
+    .field-control:focus, .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color:#65a283; box-shadow:0 0 0 3px rgba(56,137,91,.12); outline:0 }
+    .project-grid { gap:15px }
+    .project-card { padding:19px; border-radius:13px; box-shadow:var(--shadow); transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease }
+    .project-card:hover { transform:translateY(-2px); border-color:#cddfd2; box-shadow:0 10px 25px rgba(21,47,33,.07) }
+    .project-name { font-size:15px }
+    .project-numbers { gap:10px; margin:17px 0; padding:14px 0; border-color:#e8eee9 }
+    .project-number strong { font-size:18px; letter-spacing:-.035em }
+    .tabs { gap:23px }
+    .tab { padding:12px 2px; font-size:12px }
+    .tab[aria-selected="true"] { color:#155f41 }
+    .detail-grid { gap:12px }
+    .detail-item { border-radius:9px; padding:13px; background:#f8faf8; border-color:#e6ede7 }
+    .bar-list { gap:12px }
+    .bar-row { gap:12px }
+    .bar-track { height:8px; background:#eaf0eb }
+    .bar-fill { background:linear-gradient(90deg,#2b875c,#75ad75) }
+    .attention-row { padding:13px 0; border-bottom-color:#edf2ee }
+    .attention-title { line-height:1.45 }
+    .attention-meta { margin-top:3px; line-height:1.4; font-size:11px }
+    .attention-link { align-self:center; padding:5px 0 5px 8px }
+    .empty { padding:31px 14px; line-height:1.55 }
+    .empty strong { font-size:13px }
+    .notice { border-left-color:#3c8b61; border-radius:0 9px 9px 0; background:#edf7f0; color:#205c3d; padding:12px 15px; box-shadow:var(--shadow) }
+    .error-box { border-radius:10px; line-height:1.55 }
+    dialog { border:1px solid #d8e4db; border-radius:16px; box-shadow:0 24px 90px rgba(13,31,22,.28) }
+    .dialog-head { padding:18px 21px; background:#fbfdfb }
+    .dialog-body { padding:20px 21px }
+    .form-grid { gap:14px }
+    .form-field { gap:6px }
+    .form-field label { color:#31473a; font-size:12px }
+    .form-field input, .form-field select, .form-field textarea { border-color:#d3ded6; border-radius:8px; padding:9px 11px }
+    .dialog-actions { margin-top:20px; padding-top:16px }
+    .loading { padding:48px 24px; }
+    .loading::before { content:""; display:inline-block; width:14px; height:14px; margin-right:9px; vertical-align:-2px; border:2px solid #cbdcd0; border-top-color:var(--green); border-radius:50%; animation:solar-spin .75s linear infinite }
+    @keyframes solar-spin { to { transform:rotate(360deg) } }
+    .footer-note { margin-top:22px; line-height:1.6 }
+    @media(max-width:1050px) {
+      .layout { grid-template-columns:190px minmax(0,1fr) }
+      nav { padding:24px 10px }
+      main { padding:26px 22px 42px }
+      .metric-row { grid-template-columns:repeat(3,minmax(0,1fr)) }
+    }
+    @media(max-width:700px) {
+      .topbar { height:62px; padding:0 12px }
+      .brand-copy small { display:none }
+      .brand { gap:8px; font-size:14px }
+      .brand-mark { width:33px; height:33px; border-radius:10px }
+      #lastUpdated { display:none }
+      .top-actions { gap:6px }
+      .top-actions .button { min-height:33px; padding:6px 8px; font-size:11px }
+      .layout { display:block }
+      nav { display:flex; align-items:center; gap:8px; position:sticky; top:62px; z-index:2; height:auto; min-height:0; padding:8px 9px; overflow-x:auto; overflow-y:hidden; border-bottom:1px solid #dfe8e2 }
+      .nav-list { display:flex; flex:0 0 auto; width:max-content; gap:4px; margin:0 }
+      .nav-item { width:auto; min-height:37px; padding:8px 10px; font-size:11px; border-radius:8px }
+      .nav-item::before { width:auto; flex-basis:auto; font-size:14px }
+      .nav-label { display:none }
+      main { padding:19px 12px 35px }
+      #main[data-page="overview"] > .page-heading { min-height:unset; padding:19px; border-radius:13px; align-items:flex-start }
+      .page-heading { align-items:flex-start; gap:12px }
+      h1 { font-size:23px }
+      .subtitle { font-size:12px }
+      .metric-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px }
+      .metric { padding:13px 12px 13px 14px; border-radius:10px }
+      .metric-value { font-size:21px }
+      .panel-head { padding:14px }
+      .panel-body { padding:14px }
+      .content-grid { grid-template-columns:minmax(0,1fr) }
+      .toolbar { padding:11px; gap:7px }
+      .toolbar input[type="search"] { min-width:0; flex-basis:100% }
+      .field-control { min-width:0; max-width:100%; font-size:12px }
+      .detail-grid { grid-template-columns:repeat(2,minmax(0,1fr)) }
+      .form-grid { grid-template-columns:1fr }
+      .form-field.full { grid-column:auto }
+      .demo-tag { display:none }
+      .project-grid { grid-template-columns:minmax(0,1fr) }
+      .project-card { padding:15px }
+      .bar-row { grid-template-columns:86px minmax(30px,1fr) 52px; gap:8px }
+      .tabs { gap:17px }
+      .attention-row { grid-template-columns:minmax(0,1fr); gap:3px }
+      .attention-link { justify-self:start; padding-left:0 }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      *, *::before, *::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important }
+    }
   </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Skip to main content</a>
 <div class="shell">
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Solar Fleet</span></div>
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.5 4.5l1.4 1.4M18.1 18.1l1.4 1.4M2.5 12h2M19.5 12h2M4.5 19.5l1.4-1.4M18.1 5.9l1.4-1.4"/><path d="M8 15.5h8"/></svg></span>
+      <span class="brand-copy"><strong>Solar Fleet</strong><small>ENERGY OPERATIONS</small></span>
+    </div>
     <div class="top-actions">
       <span id="demoTag" class="demo-tag" hidden>DEMO DATA</span>
       <span id="lastUpdated" class="muted small-text" aria-live="polite">Loading fleet…</span>
+      <button class="button" data-action="reload" aria-label="Refresh fleet data" title="Refresh fleet data">↻ Refresh</button>
       <button class="button primary" data-action="add-inverter">+ Add Inverter</button>
     </div>
   </header>
@@ -205,6 +385,18 @@
   <form id="actionForm" class="dialog-body"></form>
 </dialog>
 
+<dialog id="accessDialog" aria-labelledby="accessTitle" aria-describedby="accessDescription">
+  <div class="dialog-head"><div><h2 id="accessTitle">Operator access</h2><p class="subtitle">Unlock your fleet workspace</p></div></div>
+  <form id="accessForm" class="dialog-body">
+    <p id="accessDescription" class="muted small-text">Enter the operator key provided by your fleet administrator.</p>
+    <div class="form-error" id="accessError" role="alert"></div>
+    <div class="form-grid">
+      <div class="form-field full"><label for="operatorKeyInput">Operator access key <span class="required">*</span></label><input id="operatorKeyInput" name="operatorKey" type="password" autocomplete="current-password" required maxlength="500" autofocus><span class="form-hint">The key stays in this page's memory and is not saved to browser storage.</span></div>
+    </div>
+    <div class="dialog-actions"><button class="button" id="cancelAccess" type="button">Cancel</button><div class="dialog-actions-right"><button class="button primary" type="submit">Continue</button></div></div>
+  </form>
+</dialog>
+
 <script>
 (() => {
   "use strict";
@@ -212,35 +404,102 @@
   const main = document.getElementById("main");
   const dialog = document.getElementById("actionDialog");
   const form = document.getElementById("actionForm");
+  const accessDialog = document.getElementById("accessDialog");
+  const accessForm = document.getElementById("accessForm");
   let operatorKey = "";
   let keyPrompt = null;
   let reloadInProgress = false;
   const $ = (selector, root = document) => root.querySelector(selector);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
   const money = (value, currency = "ZAR") => value == null ? "—" : new Intl.NumberFormat("en-ZA", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value));
-  const number = (value, digits = 1) => value == null ? "—" : Number(value).toLocaleString("en-ZA", { maximumFractionDigits: digits });
-  const date = value => value ? new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium" }).format(new Date(value)) : "—";
-  const dateTime = value => value ? new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "Never";
+  const number = (value, digits = 1) => {
+    if (value == null || value === "" || !Number.isFinite(Number(value))) return "—";
+    return Number(value).toLocaleString("en-ZA", { maximumFractionDigits: digits });
+  };
+  const date = value => {
+    if (!value) return "—";
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? "—" : new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium" }).format(parsed);
+  };
+  const dateTime = value => {
+    if (!value) return "Never";
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? "—" : new Intl.DateTimeFormat("en-ZA", { dateStyle: "medium", timeStyle: "short" }).format(parsed);
+  };
   const localDateValue = () => {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
   };
+  const askForOperatorKey = () => {
+    if (keyPrompt) return keyPrompt;
+    keyPrompt = new Promise(resolve => {
+      let settled = false;
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        accessForm.removeEventListener("submit", onSubmit);
+        accessDialog.removeEventListener("cancel", onCancel);
+        accessDialog.removeEventListener("click", onBackdropClick);
+        $("#cancelAccess").removeEventListener("click", onCancelButton);
+        accessDialog.close();
+        accessForm.reset();
+        keyPrompt = null;
+        resolve(value);
+      };
+      const onSubmit = event => {
+        event.preventDefault();
+        if (!accessForm.reportValidity()) return;
+        const key = $("#operatorKeyInput").value.trim();
+        if (!key) { $("#accessError").textContent = "Enter your operator access key to continue."; $("#accessError").style.display = "block"; return; }
+        finish(key);
+      };
+      const onCancel = event => { event.preventDefault(); finish(null); };
+      const onCancelButton = () => finish(null);
+      const onBackdropClick = event => { if (event.target === accessDialog) finish(null); };
+      $("#accessError").textContent = "";
+      $("#accessError").style.display = "none";
+      accessForm.addEventListener("submit", onSubmit);
+      accessDialog.addEventListener("cancel", onCancel);
+      accessDialog.addEventListener("click", onBackdropClick);
+      $("#cancelAccess").addEventListener("click", onCancelButton);
+      accessDialog.showModal();
+      window.setTimeout(() => $("#operatorKeyInput").focus(), 0);
+    });
+    return keyPrompt;
+  };
   const api = async (path, options = {}) => {
     const usedOperatorKey = Boolean(operatorKey);
     const send = () => {
-      const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+      const headers = { ...(options.headers || {}) };
+      if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
       if (operatorKey) headers["X-Operator-Key"] = operatorKey;
-      return fetch(path, { ...options, headers, signal: options.signal || AbortSignal.timeout(15000) });
+      const signal = options.signal || (typeof AbortSignal !== "undefined" && AbortSignal.timeout
+        ? AbortSignal.timeout(15000) : undefined);
+      return fetch(path, { ...options, headers, signal });
     };
-    let response = await send();
+    let response;
+    try {
+      response = await send();
+    } catch (networkError) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      try { response = await send(); }
+      catch (retryError) {
+        throw new Error(retryError.message || networkError.message || "Unable to reach the fleet service.");
+      }
+    }
     if (response.status === 401) {
-      if (usedOperatorKey) throw new Error("The operator access key was rejected. Reload the page to try again.");
-      if (!keyPrompt) keyPrompt = Promise.resolve(window.prompt("Enter the operator access key configured for this fleet."));
-      const entered = await keyPrompt;
-      if (!entered) throw new Error("An operator access key is required.");
+      if (usedOperatorKey) {
+        operatorKey = "";
+        throw new Error("The operator access key was rejected. Enter the correct key to reconnect.");
+      }
+      const entered = await askForOperatorKey();
+      if (!entered) throw new Error("An operator access key is required to load fleet data.");
       operatorKey = entered;
       response = await send();
-      if(response.status===401) throw new Error("The operator access key was rejected. Reload the page to try again.");
+      if (response.status === 401) {
+        operatorKey = "";
+        throw new Error("The operator access key was rejected. Check the key and refresh the page.");
+      }
     }
     if (!response.ok) {
       const body = await response.text();
@@ -277,8 +536,9 @@
     } catch (error) {
       $("#lastUpdated").textContent = hasData ? "Showing saved data · update failed" : "Could not update";
       if (hasData) {
+        main.querySelectorAll(".refresh-error").forEach(item => item.remove());
         const notice = document.createElement("div");
-        notice.className = "error-box";
+        notice.className = "error-box refresh-error";
         notice.setAttribute("role", "alert");
         notice.innerHTML = `<strong>Could not refresh fleet data.</strong><p>${esc(error.message)} Existing data is still shown.</p><button class="button" data-action="reload">Try again</button>`;
         main.prepend(notice);
@@ -321,6 +581,7 @@
     return `<div class="table-wrap"><table><thead><tr><th>Health</th><th>Manufacturer / model</th><th>Serial</th><th>Project · Site</th><th>Power</th><th>Output</th><th>Last communication</th><th>Integration</th>${extraHeader}</tr></thead><tbody>${rows}</tbody></table></div>`;
   };
   const render = () => {
+    main.dataset.page = state.page;
     document.querySelectorAll(".nav-item").forEach(item => {
       if (item.dataset.page === state.page) item.setAttribute("aria-current", "page");
       else item.removeAttribute("aria-current");
@@ -343,7 +604,7 @@
     const attention = (s.attention || []).length;
     const current = state.data.devices.filter(d => d.lifecycleStatus !== "RETIRED");
     const healthy = current.filter(d => d.status === "Healthy").length;
-    const recent = current.filter(d => d.lastSeenAt && Date.now() - new Date(d.lastSeenAt).getTime() > 15 * 60 * 1000).length;
+    const recent = current.filter(d => !d.lastSeenAt || !d.telemetryFresh || Number.isNaN(new Date(d.lastSeenAt).getTime()) || Date.now() - new Date(d.lastSeenAt).getTime() > 15 * 60 * 1000).length;
     const projectRows = state.data.projects.slice(0, 6).map(p => `<tr><td><button class="link-button" data-action="open-project" data-id="${esc(p.id)}">${esc(p.name)}</button><div class="muted small-text">${esc(p.customer || p.location || "")}</div></td><td>${status(p.status)}</td><td class="mono">${p.online}/${p.activeInverters} online</td><td class="mono">${number(p.pvPowerW)} W</td><td class="mono">${number(p.energyTodayKwh)} kWh</td></tr>`).join("");
     main.innerHTML = `${heading("Fleet overview", "Operational health, production and the issues that need action.", `<button class="button primary" data-action="add-inverter">+ Add Inverter</button>`)}
       <div class="metric-row">
@@ -356,7 +617,7 @@
       <div class="content-grid">
         <div class="stack">
           ${panel("Projects", `<div class="table-wrap"><table><thead><tr><th>Project</th><th>Status</th><th>Availability</th><th>Output</th><th>Energy today</th></tr></thead><tbody>${projectRows || `<tr><td colspan="5">${empty("No projects yet", "Create a project to organise sites and equipment.", `<button class="button primary" data-action="create-project">Create project</button>`)}</td></tr>`}</tbody></table></div>`, `${state.data.projects.length} managed project${state.data.projects.length === 1 ? "" : "s"}`, `<button class="button small" data-action="navigate" data-page="projects">View all</button>`)}
-          ${panel("Fleet", inverterTable(state.data.devices.filter(d => d.lifecycleStatus !== "RETIRED").slice(0, 7), true), `${current.length} active · ${number(recent, 0)} with communication older than 15 minutes`, `<button class="button small" data-action="navigate" data-page="fleet">Search fleet</button>`)}
+          ${panel("Fleet", inverterTable(state.data.devices.filter(d => d.lifecycleStatus !== "RETIRED").slice(0, 7), true), `${current.length} active · ${number(recent, 0)} with stale or missing telemetry`, `<button class="button small" data-action="navigate" data-page="fleet">Search fleet</button>`)}
         </div>
         <div class="stack">
           ${panel("Needs attention", attentionItems(), `${number(attention, 0)} issue${attention === 1 ? "" : "s"} · Select an item to act`)}
@@ -652,13 +913,18 @@
   const showFormError = message => { const el = $(".form-error",form); el.textContent = message; el.style.display = "block"; };
   const notify = message => { const el = document.createElement("div"); el.setAttribute("role","status"); el.className="notice"; el.textContent=message; main.prepend(el); setTimeout(()=>el.remove(),4500); };
   const csvCell = value => {
-    const text=String(value ?? "");
-    const safe=/^\s*[=+\-@]/.test(text) ? `'${text}` : text;
+    const text = String(value ?? "");
+    // Prefix formula-leading text only; negative numeric cells must remain numeric.
+    const safe = typeof value === "string" && /^\s*[=+\-@]/.test(text) ? "'" + text : text;
     return `"${safe.replaceAll('"','""')}"`;
   };
   const downloadCsv = (name, headers, rows) => {
     const csv = [headers, ...rows].map(row=>row.map(csvCell).join(",")).join("\r\n");
-    const link = document.createElement("a"); link.href=URL.createObjectURL(new Blob(["\ufeff",csv],{type:"text/csv;charset=utf-8"})); link.download=name; link.click(); URL.revokeObjectURL(link.href);
+    const link = document.createElement("a");
+    const objectUrl = URL.createObjectURL(new Blob(["\ufeff",csv],{type:"text/csv;charset=utf-8"}));
+    link.href = objectUrl; link.download = name; link.style.display = "none";
+    document.body.appendChild(link); link.click(); link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   };
   const exportReport = async () => {
     const type=$("#reportType")?.value || "fleet";
@@ -683,7 +949,7 @@
       if(action==="reload") return reload();
       if(action==="close-dialog") return dialog.close();
       if(action==="navigate") { state.page=button.dataset.page; state.selectedDevice=null; state.selectedProject=null; render(); return; }
-      if(action==="add-inverter") return openInverterForm();
+      if(action==="add-inverter") return openInverterForm(null, button.dataset.project || "");
       if(action==="create-project") { if(dialog.open) dialog.close(); return openProjectForm(); }
       if(action==="edit-project") return openProjectForm(state.data.projects.find(p=>p.id===id));
       if(action==="add-site") return openSiteForm(button.dataset.project);
@@ -762,7 +1028,8 @@
   dialog.addEventListener("click", event => { if(event.target===dialog) dialog.close(); });
   render();
   reload();
-  setInterval(reload,60000);
+  setInterval(() => { if (!document.hidden) reload(); },60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) reload(); });
 })();
 </script>
 </body>

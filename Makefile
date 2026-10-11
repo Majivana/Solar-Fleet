@@ -1,23 +1,28 @@
-.PHONY: run build test docker-build docker-run down
+.PHONY: run build test docker-build docker-up docker-down health wrapper-check
 
 build:
-	cd backend && mvn -q -DskipTests package
+	cd backend && ./mvnw -q -DskipTests package
 
 test:
-	cd backend && mvn test
+	cd backend && ./mvnw test
 
 run:
-	cd backend && mvn spring-boot:run
+	cd backend && ./mvnw spring-boot:run
 
 docker-build:
-	docker build -t solar-fleet-mvp:0.1.0 ./backend
+	docker compose build
 
-docker-run:
-	docker run --rm -p 8080:8080 \
-	  -e DB_URL=jdbc:postgresql://host.docker.internal:5432/solarfleet \
-	  -e DB_USERNAME=solarfleet \
-	  -e DB_PASSWORD=solarfleet \
-	  solar-fleet-mvp:0.1.0
+docker-up:
+	docker compose up --build -d
 
-down:
+docker-down:
 	docker compose down
+
+health:
+	@curl -fsS http://localhost:8080/actuator/health
+	@echo
+	@curl -fsS http://localhost:8080/api/v1/dashboard/summary | head -c 200
+	@echo
+
+wrapper-check:
+	cd backend && ./mvnw -v
