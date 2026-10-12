@@ -1,0 +1,12 @@
+# Production-style overrides:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Disables the synthetic demo, requires real secrets (see .env.example) and refuses to start without them.
+services:
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+  app:
+    environment:
+      APP_DEMO_DATA: "false"
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      OPERATOR_API_KEY: ${OPERATOR_API_KEY:?set OPERATOR_API_KEY in .env}
+      TENANT_ID: ${TENANT_ID:?set TENANT_ID (a UUID) in .env}

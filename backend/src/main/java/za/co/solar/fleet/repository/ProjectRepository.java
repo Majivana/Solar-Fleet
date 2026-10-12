@@ -13,4 +13,5 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     @EntityGraph(attributePaths = "tenant")
     Optional<Project> findByIdAndTenantId(UUID id, UUID tenantId);
     boolean existsByTenantIdAndNameIgnoreCase(UUID tenantId, String name);
+    long countByTenantId(UUID tenantId);
 }

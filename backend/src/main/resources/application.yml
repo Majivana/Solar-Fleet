@@ -7,12 +7,8 @@ spring:
     password: ${DB_PASSWORD:solarfleet}
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
-      minimum-idle: ${DB_POOL_MIN_IDLE:2}
-      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:5000}
-      validation-timeout: 3000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-      pool-name: solarfleet-pool
+      connection-timeout: 10000
+      validation-timeout: 5000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -21,20 +17,19 @@ spring:
     enabled: true
   jackson:
     time-zone: Africa/Johannesburg
-  threads:
-    virtual:
-      enabled: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 server:
   port: ${PORT:8080}
+  shutdown: graceful
+  # Set FORWARD_HEADERS=framework ONLY when the app is reachable exclusively through a trusted
+  # reverse proxy (the bundled docker-compose stack does this).
+  forward-headers-strategy: ${FORWARD_HEADERS:none}
   error:
     include-message: never
-  compression:
-    enabled: true
-  tomcat:
-    connection-timeout: ${SERVER_CONNECTION_TIMEOUT:5s}
-    threads:
-      max: ${SERVER_MAX_THREADS:50}
+    include-stacktrace: never
+    include-binding-errors: never
 
 management:
   endpoints:
@@ -45,23 +40,31 @@ management:
     health:
       probes:
         enabled: true
-  health:
-    livenessstate:
-      enabled: true
-    readinessstate:
-      enabled: true
+      show-details: never
 
 platform:
-  demo-data: ${APP_DEMO_DATA:true}
+  # SECURE BY DEFAULT: demo mode (synthetic data, unauthenticated API) must be opted into with
+  # APP_DEMO_DATA=true or SPRING_PROFILES_ACTIVE=demo. Otherwise OPERATOR_API_KEY and TENANT_ID are required.
+  demo-data: ${APP_DEMO_DATA:false}
   operator-api-key: ${OPERATOR_API_KEY:}
   tenant-id: ${TENANT_ID:}
+  tenant-name: ${TENANT_NAME:Operator}
   polling:
+    enabled: ${POLLING_ENABLED:true}
     initial-delay-ms: ${POLLING_INITIAL_DELAY_MS:1500}
     fixed-delay-ms: ${POLLING_FIXED_DELAY_MS:60000}
-  network:
-    connect-timeout-ms: ${OEM_CONNECT_TIMEOUT_MS:5000}
-    read-timeout-ms: ${OEM_READ_TIMEOUT_MS:15000}
+  telemetry:
+    # Rows older than this are purged nightly (the newest reading per device is always kept). 0 disables.
+    retention-days: ${TELEMETRY_RETENTION_DAYS:90}
+    retention-cron: ${TELEMETRY_RETENTION_CRON:0 30 2 * * *}
+  outbound:
+    connect-timeout-ms: ${OUTBOUND_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${OUTBOUND_READ_TIMEOUT_MS:15000}
+    allow-http: ${OUTBOUND_ALLOW_HTTP:false}
+    allow-private-networks: ${OUTBOUND_ALLOW_PRIVATE_NETWORKS:false}
 
 logging:
+  pattern:
+    level: "%5p [%X{requestId:-}]"
   level:
     za.co.solar.fleet: INFO

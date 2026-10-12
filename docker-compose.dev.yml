@@ -1,0 +1,9 @@
+# Developer override: also publish PostgreSQL on 127.0.0.1:5432 so `./mvnw spring-boot:run` / the IDE can use it.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+services:
+  db:
+    networks: [data, devhost]
+    ports:
+      - "127.0.0.1:5432:5432"
+networks:
+  devhost:

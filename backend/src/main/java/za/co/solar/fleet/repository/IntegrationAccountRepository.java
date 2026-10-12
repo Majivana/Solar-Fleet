@@ -5,5 +5,6 @@ import java.util.UUID;
 import java.util.List;
 public interface IntegrationAccountRepository extends JpaRepository<IntegrationAccount, UUID> {
   List<IntegrationAccount> findByEnabledTrueOrderByBrand();
+  boolean existsByTenantIdAndBrand(UUID tenantId, za.co.solar.fleet.domain.Brand brand);
   java.util.Optional<IntegrationAccount> findFirstByTenantIdAndBrandAndEnabledTrue(UUID tenantId, za.co.solar.fleet.domain.Brand brand);
 }

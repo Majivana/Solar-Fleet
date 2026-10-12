@@ -16,7 +16,8 @@ public abstract class LiveApiConnectorBoundary implements InverterConnector {
         if (account.baseUrl == null || account.baseUrl.isBlank()) {
             throw new IllegalStateException("Missing configured base URL for " + brand());
         }
-        return account.baseUrl;
+        // Strict defaults: https only, no private/loopback targets (SSRF guard).
+        return za.co.solar.fleet.integration.net.OutboundUrlValidator.validate(account.baseUrl, false, false).toString();
     }
     protected ConnectorResult<List<RemoteDevice>> notConfigured() {
         return ConnectorResult.fail(brand()+" live adapter is not configured with approved OEM credentials/endpoints.");

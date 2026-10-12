@@ -13,6 +13,8 @@ public interface DeviceRepository extends JpaRepository<Device, UUID> {
   List<Device> findBySiteId(UUID siteId);
   @EntityGraph(attributePaths = {"site", "site.tenant", "site.project", "integrationAccount"})
   List<Device> findByIntegrationAccountId(UUID integrationAccountId);
+  @EntityGraph(attributePaths = {"site", "site.project", "integrationAccount"})
+  List<Device> findByIntegrationAccountIdAndLifecycleStatusNot(UUID integrationAccountId, za.co.solar.fleet.domain.LifecycleStatus status);
   @Query("select d from Device d join fetch d.tenant join fetch d.site s join fetch s.tenant " +
           "left join fetch s.project left join fetch d.integrationAccount where d.tenant.id = :tenantId")
   List<Device> findFleetByTenantId(@Param("tenantId") UUID tenantId);

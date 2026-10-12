@@ -1,28 +1,38 @@
-.PHONY: run build test docker-build docker-up docker-down health wrapper-check
+.PHONY: help build test verify run db up up-prod down logs clean docker-build
+MVN := ./mvnw
 
-build:
-	cd backend && ./mvnw -q -DskipTests package
+help:            ## list targets
+	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/ -/'
 
-test:
-	cd backend && ./mvnw test
+build:           ## compile and package (skips tests)
+	$(MVN) -q -DskipTests package
 
-run:
-	cd backend && ./mvnw spring-boot:run
+test:            ## run unit tests (set IT_DB_URL to include the PostgreSQL migration test)
+	$(MVN) test
 
-docker-build:
-	docker compose build
+verify:          ## full build: tests + coverage report
+	$(MVN) verify
 
-docker-up:
+db:              ## start only PostgreSQL on 127.0.0.1:5432 for local development
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+
+run: db          ## run the app locally in demo mode against the dev database
+	SPRING_PROFILES_ACTIVE=demo $(MVN) -pl backend spring-boot:run
+
+up:              ## full demo stack (proxy + app + db) at http://localhost:8080
 	docker compose up --build -d
 
-docker-down:
+up-prod:         ## production-style stack; needs a filled-in .env
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
+down:            ## stop the stack
 	docker compose down
 
-health:
-	@curl -fsS http://localhost:8080/actuator/health
-	@echo
-	@curl -fsS http://localhost:8080/api/v1/dashboard/summary | head -c 200
-	@echo
+logs:            ## follow application logs
+	docker compose logs -f app
 
-wrapper-check:
-	cd backend && ./mvnw -v
+docker-build:    ## build the application image only
+	docker build -t solar-fleet-mvp:0.1.0 ./backend
+
+clean:           ## remove build output
+	$(MVN) -q clean

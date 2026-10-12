@@ -27,81 +27,84 @@ The local demo connectors are synthetic fixtures and are labelled as demo data i
 
 ## Security boundary
 
-Demo mode is intentionally unauthenticated and is for local demonstration only. Do not expose it to the internet. For a non-demo single-tenant deployment, set `APP_DEMO_DATA=false`, `OPERATOR_API_KEY` and `TENANT_ID`; API requests then require `X-Operator-Key`. This is a deployment-level shared key, **not** user identity, role-based access or multi-tenant SaaS authentication. Deploy behind HTTPS and a trusted network boundary. Production multi-user authentication and per-user tenant membership are still required before offering this as a customer-facing SaaS.
+Demo mode is intentionally unauthenticated and is for local demonstration only (the compose stack binds it to loopback). Do not expose it to the internet. For a non-demo single-tenant deployment, set `OPERATOR_API_KEY` and `TENANT_ID` (demo is off by default); API requests then require `X-Operator-Key`. This is a deployment-level shared key, **not** user identity, role-based access or multi-tenant SaaS authentication. Deploy behind HTTPS and a trusted network boundary. Production multi-user authentication and per-user tenant membership are still required before offering this as a customer-facing SaaS.
 
 ## Technology
 
-- Java 21
-- Spring Boot 4.0.8
-- Spring Web
-- Spring Data JPA
-- PostgreSQL
-- Flyway
-- Jackson
-- Actuator
-- Vanilla HTML/CSS/JS dashboard for the first runnable UI
+- Java 21, Spring Boot 4.0.8 (Spring Web, Data JPA, Validation, Actuator), PostgreSQL 16, Flyway
+- Maven 3.9 (via the bundled `./mvnw`), JaCoCo coverage, Maven Enforcer
+- Vanilla HTML/CSS/JS dashboard served by the application
+- Docker Compose stack with an nginx edge proxy and segmented networks
 
-## Run locally
+## Quick start
 
-### Option A: Docker Compose (recommended)
-
-Requires Docker with Compose. Creates a dedicated bridge network (`solarfleet-net`) so the app reaches PostgreSQL as host `postgres`.
+Requirements: **Docker** for the full stack, or **JDK 21** (Maven is downloaded automatically by `./mvnw`).
 
 ```bash
-cp .env.example .env
-# Edit .env and replace DB_PASSWORD with a strong local development password.
-docker compose up --build -d
-# or: make docker-up
+# 1. Whole system in containers (proxy + app + PostgreSQL) in demo mode
+docker compose up --build            # or: make up
+# open http://localhost:8080   (health: the proxy hides /actuator; the app reports it internally)
+
+# 2. Developer loop: PostgreSQL in Docker, app on your machine
+make run                             # = docker compose ... up -d db ; SPRING_PROFILES_ACTIVE=demo ./mvnw -pl backend spring-boot:run
+
+# 3. Build and test only
+./mvnw verify                        # unit tests + coverage (backend/target/site/jacoco)
+IT_DB_URL=jdbc:postgresql://localhost:5432/solarfleet ./mvnw verify   # also runs the PostgreSQL migration test
 ```
 
-The local Compose ports bind to `127.0.0.1` by default so the unauthenticated demo is not exposed to your LAN unintentionally. Adjust the port bindings deliberately if your development setup requires LAN access.
+On Windows without `make`/a POSIX shell, run `docker compose up --build`, or use IntelliJ's bundled Maven with the
+Spring profile `demo`, or run `mvn wrapper:wrapper` once to generate Apache's official `mvnw.cmd`.
 
-Open:
+**The application refuses to start unauthenticated unless you opt in.** Use `SPRING_PROFILES_ACTIVE=demo` (or
+`APP_DEMO_DATA=true`) for the synthetic demo; otherwise set `OPERATOR_API_KEY` and `TENANT_ID` (see below).
 
-- Dashboard: http://localhost:8080
-- Health: http://localhost:8080/actuator/health
-- API: http://localhost:8080/api/v1/dashboard/summary
-
-Stop with `docker compose down` or `make docker-down`.
-
-#### If `localhost:8080` returns an empty response
-
-If the app container repeatedly restarts, one possible cause is that a persistent PostgreSQL volume still has an older database password than the current `.env` file. Recreating the container does not change a password already stored inside PostgreSQL. To repair this without deleting database data:
+### Production-style run
 
 ```bash
-# From the project root; use a generated hex password in .env.
-openssl rand -hex 24
-# Put the generated value on the DB_PASSWORD= line in .env, then run:
-bash scripts/fix-local-startup.sh
+cp .env.example .env     # set POSTGRES_PASSWORD, OPERATOR_API_KEY, TENANT_ID (uuidgen), TENANT_NAME
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d     # or: make up-prod
 ```
 
-The recovery script recreates the PostgreSQL container while preserving its named data volume, synchronises the `solarfleet` database role password to the Compose environment, rebuilds the app, and waits for the health check. If the app still fails, it prints container exit/OOM/restart information and the latest app/database logs. It does not run `docker compose down -v` or delete the database volume.
+On first start the configured tenant and one (credential-less) LIVE integration account per manufacturer are created so
+equipment can be onboarded; live polling reports "sync error" until an approved OEM adapter is configured. Put TLS in
+front of the proxy (load balancer, Caddy, or certificates mounted into nginx) before exposing it.
 
-### Option B: Maven Wrapper
+## Network design
 
-Requirements: Java 21+. The Maven Wrapper (`./mvnw`) downloads Maven 3.9.12 on first use (network required once).
-
-```bash
-# Start PostgreSQL first (Compose DB only):
-docker compose up -d postgres
-
-cd backend
-./mvnw spring-boot:run
+```text
+host --127.0.0.1:8080--> [proxy] --edge_app (internal)--> [app] --data (internal)--> [db]
+                                                           [app] --egress--> OEM cloud APIs
 ```
 
-Set PostgreSQL variables as needed:
+| Network | Members | Purpose |
+|---|---|---|
+| `public` | proxy | the only network with a host port (loopback by default; `BIND_ADDRESS`, `HTTP_PORT`) |
+| `edge_app` (internal) | proxy, app | proxy-to-app traffic; no outside route |
+| `data` (internal) | app, db | database traffic; PostgreSQL has no host port and no internet route |
+| `egress` | app | outbound calls to vendor APIs |
 
-```bash
-export DB_URL=jdbc:postgresql://localhost:5432/solarfleet
-export DB_USERNAME=solarfleet
-export DB_PASSWORD=solarfleet
-```
+- nginx adds rate limiting on `/api/`, a 1 MB body limit, timeouts, hides `/actuator`, and overwrites `X-Forwarded-For`.
+- Outbound vendor calls go through `OutboundHttpClient`: bounded connect/read timeouts, redirects never followed, and
+  base URLs validated (https only; no loopback/private/link-local/metadata addresses) to prevent SSRF.
+- Every request carries an `X-Request-Id` (also in logs and in error bodies).
+- `docker-compose.dev.yml` additionally publishes PostgreSQL on `127.0.0.1:5432` for local development only.
 
-Useful Make targets: `make test`, `make build`, `make health`.
+## Configuration
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `APP_DEMO_DATA` | `false` (compose: `true`) | synthetic data + unauthenticated API; never expose |
+| `OPERATOR_API_KEY`, `TENANT_ID`, `TENANT_NAME` | – | required when demo is off |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_POOL_SIZE` | local PostgreSQL / 10 | database |
+| `POLLING_ENABLED`, `POLLING_FIXED_DELAY_MS` | `true`, `60000` | run exactly one poller per deployment |
+| `TELEMETRY_RETENTION_DAYS` | `90` | nightly purge (newest reading per device kept); `0` disables |
+| `OUTBOUND_CONNECT_TIMEOUT_MS`, `OUTBOUND_READ_TIMEOUT_MS`, `OUTBOUND_ALLOW_HTTP`, `OUTBOUND_ALLOW_PRIVATE_NETWORKS` | `5000`, `15000`, `false`, `false` | vendor HTTP policy |
+| `FORWARD_HEADERS` | `none` (compose: `framework`) | trust proxy headers only behind a trusted proxy |
 
 ## Demo tenant
 
-When `APP_DEMO_DATA=true`, startup ensures a demo tenant, project, one site per brand, and **one active inverter for every supported brand**, plus seed telemetry/alarms. Sigenergy also includes a retired unit for lifecycle demos. Fixture states cover healthy, offline, fault, stale telemetry and sync-error.
+The application seeds one demo tenant, four sites and one demo device per requested brand when `APP_DEMO_DATA=true`.
 
 Brands represented:
 
@@ -116,6 +119,8 @@ Brands represented:
 - SolaX
 - Sigenergy
 
+Audit: see [docs/AUDIT-2026-10-11.md](docs/AUDIT-2026-10-11.md) for findings, fixes and remaining risks.
+
 ## Production roadmap
 
 1. Obtain OEM developer/partner credentials and customer authorization flows.
@@ -126,7 +131,7 @@ Brands represented:
 6. Add weather/irradiance and tariff datasets for PR, anomaly and financial analytics.
 7. Add remote-control commands only after vendor capability validation and safety/approval workflows.
 
-Current route behavior and the exact security/reporting boundary are documented in [REST-API.md](docs/REST-API.md). The project financial formula is described in [DATABASE.md](docs/DATABASE.md). Findings, release gates and verification limits from the latest engineering review are in [SAAS_READINESS_AUDIT.md](docs/SAAS_READINESS_AUDIT.md).
+Current route behavior and the exact security/reporting boundary are documented in [REST-API.md](docs/REST-API.md). The project financial formula is described in [DATABASE.md](docs/DATABASE.md).
 
 ## Current OEM verification notes
 

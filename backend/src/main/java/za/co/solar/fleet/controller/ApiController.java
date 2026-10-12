@@ -93,7 +93,7 @@ public class ApiController {
     public OperationsService.ProjectReport generateReport(@PathVariable UUID id) { return operations.generateReport(id); }
 
     @PostMapping("/reports/generate")
-    public OperationsService.ReportRunDto generateReport(@RequestBody ReportRequest request) {
+    public OperationsService.ReportRunDto generateReport(@Valid @RequestBody ReportRequest request) {
         return operations.generateReport(request.type(), request.projectId());
     }
 
@@ -165,6 +165,6 @@ public class ApiController {
         }
     }
 
-    record ReportRequest(String type, UUID projectId) {}
+    record ReportRequest(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 20) String type, UUID projectId) {}
     record MaintenanceRequest(boolean maintenance) {}
 }

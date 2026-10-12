@@ -3,147 +3,344 @@ info:
   title: Solar Fleet Management API
   version: 0.1.0
   description: |
-    Demo mode is unauthenticated. Non-demo single-tenant deployments require
-    the configured X-Operator-Key header. This is not a user/role auth system.
+    Generated from ApiController (26 operations). Demo mode (APP_DEMO_DATA=true) is unauthenticated.
+    Otherwise every /api request needs the X-Operator-Key header. This is a shared deployment key,
+    not per-user authentication. Errors are RFC 9457 problem+json and include a requestId.
 servers:
   - url: http://localhost:8080
 security:
   - OperatorKey: []
 components:
   securitySchemes:
-    OperatorKey:
-      type: apiKey
-      in: header
-      name: X-Operator-Key
+    OperatorKey: {type: apiKey, in: header, name: X-Operator-Key}
+  responses:
+    Problem:
+      description: Problem details (status, title, detail, requestId)
+      content:
+        application/problem+json:
+          schema: {type: object}
 paths:
   /api/v1/dashboard/summary:
     get:
+      operationId: dashboard
       summary: Fleet dashboard summary
       responses:
-        '200':
-          description: OK
+        '200': {description: OK}
+        '401': {$ref: '#/components/responses/Problem'}
   /api/v1/integrations/catalog:
     get:
-      summary: Supported integration catalog
-      responses:
-        '200':
-          description: OK
-  /api/v1/sites:
-    get:
-      summary: List sites
-      responses:
-        '200':
-          description: OK
-  /api/v1/devices:
-    get:
-      summary: List inverter devices
-      responses:
-        '200':
-          description: OK
-  /api/v1/devices/{deviceId}/telemetry:
-    get:
-      summary: Latest device telemetry
-      parameters:
-        - name: deviceId
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
+      operationId: integrationCatalog
+      summary: Supported integration catalog (capabilities per manufacturer)
       responses:
         '200': {description: OK}
-        '404': {description: Device not found}
+        '401': {$ref: '#/components/responses/Problem'}
+  /api/v1/activity:
+    get:
+      operationId: activity
+      summary: Recent activity
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /api/v1/alarms:
     get:
-      summary: Open alarms
+      operationId: alarms
+      summary: List alarms
       responses:
         '200': {description: OK}
-  /api/v1/projects:
-    get:
-      summary: List project workspace summaries
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/alarms/{id}/acknowledge:
+    post:
+      operationId: acknowledgeAlarm
+      summary: Acknowledge alarm
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
       responses:
         '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/alarms/{id}/clear:
     post:
-      summary: Create a project
-      responses:
-        '201': {description: Created}
-        '400': {description: Invalid project details}
-  /api/v1/projects/{id}/sites:
-    post:
-      summary: Add a site to a project
+      operationId: clearAlarm
+      summary: Clear alarm
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
       responses:
-        '201': {description: Created}
-        '404': {description: Project not found}
-  /api/v1/projects/{id}/costs:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/costs:
     get:
-      summary: List project costs
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
+      operationId: allCosts
+      summary: List all costs
       responses:
-        '200': {description: Project cost ledger}
-    post:
-      summary: Record a project cost
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
-      responses:
-        '201': {description: Cost recorded}
-        '400': {description: Invalid cost details}
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /api/v1/devices:
     get:
+      operationId: devices
       summary: List inverters
-      parameters:
-        - name: includeRetired
-          in: query
-          schema: {type: boolean, default: false}
       responses:
-        '200': {description: Tenant-scoped inverter list}
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
     post:
+      operationId: createDevice
       summary: Add inverter
-      responses:
-        '201': {description: Inverter added}
-        '409': {description: Duplicate manufacturer and serial}
-  /api/v1/devices/{id}/retire:
-    post:
-      summary: Retire inverter and preserve history
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              properties:
-                reason: {type: string, maxLength: 500}
-                retiredAt: {type: string, format: date}
-                notes: {type: string, maxLength: 2000}
+            schema: {type: object}
       responses:
-        '200': {description: Retired inverter}
-        '404': {description: Inverter not found}
+        '201': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/devices/{id}:
+    get:
+      operationId: device
+      summary: Get inverter
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    put:
+      operationId: updateDevice
+      summary: Update inverter
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/devices/{id}/maintenance:
+    post:
+      operationId: setMaintenance
+      summary: Set or clear maintenance
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /api/v1/devices/{id}/restore:
     post:
-      summary: Restore inverter to active fleet
+      operationId: restoreDevice
+      summary: Restore retired inverter
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
       responses:
-        '200': {description: Restored inverter}
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/devices/{id}/retire:
+    post:
+      operationId: retireDevice
+      summary: Retire inverter (kept as history)
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/devices/{id}/telemetry:
+    get:
+      operationId: telemetry
+      summary: Latest 100 telemetry readings
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/projects:
+    get:
+      operationId: projects
+      summary: List projects
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: createProject
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '201': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/projects/{id}:
+    get:
+      operationId: project
+      summary: Get project
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    put:
+      operationId: updateProject
+      summary: Update project
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/projects/{id}/costs:
+    get:
+      operationId: costs
+      summary: List project costs
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+    post:
+      operationId: addCost
+      summary: Add a project cost
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '201': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/projects/{id}/report:
+    get:
+      operationId: report
+      summary: Project report data
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/projects/{id}/report/generate:
+    post:
+      operationId: generateReport
+      summary: Record report generation (audit)
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/projects/{id}/sites:
+    post:
+      operationId: createSite
+      summary: Add a site to a project
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
+      responses:
+        '201': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /api/v1/reports/generate:
     post:
-      summary: Record report generation in activity history
+      operationId: generateReport
+      summary: Record report generation (audit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object}
       responses:
-        '200': {description: Report generation recorded}
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /api/v1/sites:
+    get:
+      operationId: sites
+      summary: List sites
+      responses:
+        '200': {description: OK}
+        '400': {$ref: '#/components/responses/Problem'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}

@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -13,18 +15,24 @@ import java.security.MessageDigest;
 
 @Component
 public class OperatorApiFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(OperatorApiFilter.class);
     private final boolean demoMode;
     private final String apiKey;
     private final String tenantId;
 
-    public OperatorApiFilter(@Value("${platform.demo-data:true}") boolean demoMode,
+    public OperatorApiFilter(@Value("${platform.demo-data:false}") boolean demoMode,
                              @Value("${platform.operator-api-key:}") String apiKey,
                              @Value("${platform.tenant-id:}") String tenantId) {
         this.demoMode = demoMode;
         this.apiKey = apiKey;
         this.tenantId = tenantId;
         if (!demoMode && (apiKey.isBlank() || tenantId.isBlank())) {
-            throw new IllegalStateException("APP_DEMO_DATA=false requires OPERATOR_API_KEY and TENANT_ID.");
+            throw new IllegalStateException("Refusing to start without authentication. Provide OPERATOR_API_KEY and "
+                    + "TENANT_ID, or opt in to the unauthenticated synthetic demo with APP_DEMO_DATA=true "
+                    + "(SPRING_PROFILES_ACTIVE=demo).");
+        }
+        if (demoMode) {
+            log.warn("DEMO MODE: the API is UNAUTHENTICATED and serves synthetic data. Do not expose this instance.");
         }
     }
 
@@ -38,7 +46,11 @@ public class OperatorApiFilter extends OncePerRequestFilter {
         response.setHeader("Content-Security-Policy",
                 "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
                         "connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
-        if (demoMode || !request.getRequestURI().startsWith("/api/")) {
+        boolean api = request.getRequestURI().startsWith("/api/");
+        if (api) {
+            response.setHeader("Cache-Control", "no-store");
+        }
+        if (demoMode || !api) {
             chain.doFilter(request, response);
             return;
         }

@@ -35,7 +35,7 @@ public class OperationsService {
                              DeviceRepository devices, IntegrationAccountRepository accounts,
                              ProjectCostRepository costs, AuditEventRepository audit,
                              AlarmRepository alarms, TelemetryRepository telemetry,
-                             @org.springframework.beans.factory.annotation.Value("${platform.demo-data:true}") boolean demoMode,
+                             @org.springframework.beans.factory.annotation.Value("${platform.demo-data:false}") boolean demoMode,
                              @org.springframework.beans.factory.annotation.Value("${platform.tenant-id:}") String tenantId) {
         this.tenants = tenants;
         this.projects = projects;
@@ -91,8 +91,8 @@ public class OperationsService {
             }
         }
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("sites", sites.findByTenantIdOrderByName(tenant.id).size());
-        result.put("projects", projects.findByTenantIdOrderByName(tenant.id).size());
+        result.put("sites", sites.countByTenantId(tenant.id));
+        result.put("projects", projects.countByTenantId(tenant.id));
         result.put("inverters", fleet.stream().filter(d -> d.lifecycleStatus != LifecycleStatus.RETIRED).count());
         result.put("online", fleet.stream().filter(d -> d.lifecycleStatus != LifecycleStatus.RETIRED && healthLabel(d).equals("Healthy")).count());
         result.put("offline", fleet.stream().filter(d -> d.lifecycleStatus != LifecycleStatus.RETIRED && d.status == DeviceStatus.OFFLINE).count());
@@ -622,6 +622,22 @@ public class OperationsService {
             cost.reference = "DEVICE_PURCHASE";
             cost.currency = cost.project.currency;
             cost.costDate = device.installedAt == null ? LocalDate.now() : device.installedAt;
+        } else {
+            // The inverter may have been moved: the purchase record must follow it so each project's ledger stays correct.
+            Project target = device.site.project;
+            if (target == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Assign the site to a project before recording an inverter purchase cost.");
+            }
+            if (!cost.project.id.equals(target.id)) {
+                if (!cost.currency.equals(target.currency)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT,
+                            "The inverter's purchase cost is recorded in " + cost.currency + " and the destination project uses "
+                                    + target.currency + ". Move it between projects that share a currency.");
+                }
+                cost.project = target;
+            }
+            cost.site = device.site;
         }
         cost.unitCost = device.purchaseCost;
         cost.total = MoneyMath.costTotal(cost.quantity, cost.unitCost);

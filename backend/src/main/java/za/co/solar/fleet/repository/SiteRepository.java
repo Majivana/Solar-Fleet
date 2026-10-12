@@ -8,4 +8,5 @@ public interface SiteRepository extends JpaRepository<Site, UUID> {
   List<Site> findByTenantIdOrderByName(UUID tenantId);
   @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"tenant", "project"})
   java.util.Optional<Site> findByIdAndTenantId(UUID id, UUID tenantId);
+  long countByTenantId(UUID tenantId);
 }

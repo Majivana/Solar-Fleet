@@ -1,3 +1,5 @@
+> Historical audit (2026-10-06/07). The latest audit, fixes and remaining risks are in [AUDIT-2026-10-11.md](AUDIT-2026-10-11.md).
+
 # Baseline repository audit
 
 Baseline audit performed 2026-10-06 before the operator-workflow changes. The project root is a Git checkout with an initial commit; deployment migration state is not available locally. Findings below describe that baseline. See the follow-up status at the end for changes and remaining risks verified on 2026-10-07.
@@ -57,12 +59,4 @@ Baseline audit performed 2026-10-06 before the operator-workflow changes. The pr
 - Removed the unused global/N+1 dashboard service; the active summary uses a latest-per-device query. Actuator exposure is limited to health.
 - Current output and savings exclude telemetry older than 15 minutes. Money uses decimal persistence/calculation and project currency; mixed-currency totals are not combined.
 - Nine unit/contract tests and JavaScript syntax validation pass. A fresh PostgreSQL 16 instance applied V1-V5 and passed Hibernate schema validation; API smoke tests covered project/site/inverter/cost, currency lock, detail, retirement/restoration, reports and audit. Browser UI automation and tenant-isolation integration tests remain unverified.
-- Remaining risks: existing plaintext-capable integration credential storage, unconfigured OEM live APIs, non-paginated fleet/cost data, and lack of PostgreSQL-backed migration/tenant tests. Do not expose demo mode publicly or deploy this as customer-facing SaaS.
-
-## Follow-up status (2026-10-11)
-
-- Verified end-to-end on Docker Compose: Flyway V1–V6 applied, Hibernate validate passed, app and Postgres both healthy, dashboard/API/UI responding.
-- Added Maven Wrapper (`backend/mvnw`) and Compose bridge network `solarfleet-net` so app↔Postgres DNS works as host `postgres`.
-- Polling no longer holds a DB transaction around connector I/O; demo SOLIS sync-failure fixture is WARN + `lastError`, not ERROR stack spam.
-- Added shared `RestClient` builder with connect/read timeouts for future OEM live adapters; Hikari/Tomcat timeouts and liveness/readiness probes enabled.
-- `./mvnw test` passes (10 tests). Remaining SaaS gaps unchanged: OIDC/roles, secret vaulting, OEM live credentials, pagination, browser automation.
+- Remaining risks: existing plaintext-capable integration credential storage, unconfigured OEM live APIs, non-paginated fleet/cost data, polling calls within a transaction, and lack of PostgreSQL-backed migration/tenant tests. Do not expose demo mode publicly or deploy this as customer-facing SaaS.

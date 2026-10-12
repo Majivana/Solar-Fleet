@@ -43,3 +43,9 @@ The core application uses a normalized telemetry contract. Each OEM adapter maps
 - Immutable audit trail for remote commands.
 - Separate READ and CONTROL permissions.
 - Remote control disabled by default.
+
+## Deployment network (implemented)
+
+See the README "Network design" section: `host -> proxy -> app -> db`, with `edge_app` and `data` internal networks and a
+separate `egress` network for vendor APIs. Polling runs per account in three steps (snapshot, network call with no
+transaction, short persist transaction); telemetry is unique per device and source timestamp and purged by retention.

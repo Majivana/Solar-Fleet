@@ -1,0 +1,4 @@
+# Activated with SPRING_PROFILES_ACTIVE=demo (what `make run` and the default docker-compose stack use).
+# Seeds a synthetic tenant and disables API authentication. Never expose a demo instance to the internet.
+platform:
+  demo-data: ${APP_DEMO_DATA:true}
